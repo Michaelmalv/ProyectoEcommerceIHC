@@ -67,6 +67,8 @@ export function ProductPage() {
   };
 
   const isLowStock = product.stock < 5;
+  const galleryImages = product.images?.length ? product.images : [product.image];
+  const [selectedImage, setSelectedImage] = useState(galleryImages[0]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -124,21 +126,25 @@ export function ProductPage() {
         <div>
           <div className="border-2 border-gray-300 bg-gray-100 aspect-square flex items-center justify-center mb-4 overflow-hidden">
             <img
-              src={product.image}
+              src={selectedImage}
               alt={`${product.name} - ${product.color} para ${product.gender} - Vista principal`}
               className="w-full h-full object-contain"
             />
           </div>
           <div className="grid grid-cols-4 gap-2">
-            {[1, 2, 3, 4].map((i) => (
+            {galleryImages.map((image, index) => (
               <button
-                key={i}
-                className="border-2 border-gray-300 bg-gray-100 aspect-square flex items-center justify-center hover:border-black focus:outline-none focus:ring-2 focus:ring-black overflow-hidden"
-                aria-label={`Ver imagen ${i} de ${product.name}`}
+                key={`${image}-${index}`}
+                onClick={() => setSelectedImage(image)}
+                className={`border-2 bg-gray-100 aspect-square flex items-center justify-center hover:border-black focus:outline-none focus:ring-2 focus:ring-black overflow-hidden ${
+                  selectedImage === image ? "border-black" : "border-gray-300"
+                }`}
+                aria-label={`Ver imagen ${index + 1} de ${product.name}`}
+                aria-pressed={selectedImage === image}
               >
                 <img
-                  src={product.image}
-                  alt={`${product.name} - Vista ${i}`}
+                  src={image}
+                  alt={`${product.name} - Vista ${index + 1}`}
                   className="w-full h-full object-contain opacity-70"
                 />
               </button>

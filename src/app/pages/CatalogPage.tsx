@@ -14,6 +14,7 @@ import {
   BreadcrumbSeparator,
 } from "../components/ui/breadcrumb";
 import { products, sizes, colors, genders } from "../data/products";
+import { getPublicUrlFromPath } from "../../utils/storage";
 
 /**
  * ANÁLISIS HEURÍSTICO:
@@ -298,7 +299,7 @@ export function CatalogPage() {
                       }`}
                     >
                       <img
-                        src={product.image}
+                        src={getPublicUrlFromPath(product.image)}
                         alt={`${product.name} - ${product.color} - ${product.gender}`}
                         className="w-full h-full object-contain"
                       />

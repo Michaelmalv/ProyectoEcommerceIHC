@@ -116,6 +116,33 @@ export function generateOrderConfirmationEmail(order: any, items: any[]) {
   `;
 }
 
+// Versión texto plano para mejorar compatibilidad y entregabilidad
+export function generateOrderConfirmationText(order: any, items: any[]) {
+  const itemsText = items
+    .map((item) => `- ${item.product_name} | Talla: ${item.selected_size} | Cantidad: ${item.quantity} | $${(Number(item.product_price) * item.quantity).toFixed(2)}`)
+    .join("\n");
+
+  return [
+    `Hola ${order.customer_name},`,
+    "",
+    "Tu pedido ha sido confirmado en CrowStore.",
+    `Número de pedido: ${order.id}`,
+    `Fecha: ${new Date(order.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+    `Email: ${order.customer_email}`,
+    "",
+    "Dirección de envío:",
+    `${order.customer_address}`,
+    "",
+    "Productos:",
+    itemsText,
+    "",
+    `Total: $${Number(order.total).toFixed(2)}`,
+    "",
+    "Gracias por tu compra.",
+    "Equipo CrowStore",
+  ].join("\n");
+}
+
 // Función para enviar email usando SendGrid
 export async function sendOrderConfirmationEmail(
   to: string,
@@ -134,6 +161,7 @@ export async function sendOrderConfirmationEmail(
     }
 
     const emailHtml = generateOrderConfirmationEmail(order, items);
+    const emailText = generateOrderConfirmationText(order, items);
 
     console.log(`HTML del email generado, longitud: ${emailHtml.length} caracteres`);
 
@@ -147,7 +175,7 @@ export async function sendOrderConfirmationEmail(
         personalizations: [
           {
             to: [{ email: to }],
-            subject: `Confirmación de Pedido ${order.id} - CrowStore`,
+            subject: `Tu pedido ${order.id} en CrowStore`,
           },
         ],
         from: {
@@ -155,6 +183,10 @@ export async function sendOrderConfirmationEmail(
           name: 'CrowStore',
         },
         content: [
+          {
+            type: 'text/plain',
+            value: emailText,
+          },
           {
             type: 'text/html',
             value: emailHtml,
@@ -167,14 +199,26 @@ export async function sendOrderConfirmationEmail(
       }),
     });
 
-    const responseData = await response.json();
+    const responseText = await response.text();
+    let responseData: any = null;
+
+    if (responseText) {
+      try {
+        responseData = JSON.parse(responseText);
+      } catch {
+        responseData = responseText;
+      }
+    }
 
     if (response.ok || response.status === 202) {
       console.log(`Email enviado exitosamente a ${to}`);
-      return { success: true, data: { messageId: 'sent-via-sendgrid' } };
+      return { success: true, data: { messageId: responseData?.message_id || 'sent-via-sendgrid' } };
     } else {
       console.log(`Error al enviar email:`, JSON.stringify(responseData));
-      return { success: false, error: responseData.errors?.[0]?.message || 'SendGrid API error' };
+      return {
+        success: false,
+        error: responseData?.errors?.[0]?.message || responseData?.message || 'SendGrid API error'
+      };
     }
   } catch (error) {
     console.log(`Error crítico al enviar email:`, error);
