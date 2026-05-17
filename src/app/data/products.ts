@@ -11,7 +11,7 @@ export const products: Product[] = [
     color: "Negro",
     gender: "unisex",
     stock: 30,
-    image: "https://placehold.co/500x500/000000/ffffff?text=Camiseta+Oversize+Negra",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_2s9jst2s9jst2s9j.png",
   },
   {
     id: 2,
@@ -22,7 +22,7 @@ export const products: Product[] = [
     color: "Blanco",
     gender: "unisex",
     stock: 30,
-    image: "https://placehold.co/500x500/f5f5f5/1a1a1a?text=Camiseta+Oversize+Blanca",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_koer6nkoer6nkoer.png",
   },
   // Pantalones
   {
@@ -34,7 +34,7 @@ export const products: Product[] = [
     color: "Negro",
     gender: "unisex",
     stock: 20,
-    image: "https://placehold.co/500x500/111111/ffffff?text=Pantalon+Jean+Baggy+Negro",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_3kl50u3kl50u3kl5.png",
   },
   {
     id: 4,
@@ -45,7 +45,7 @@ export const products: Product[] = [
     color: "Plomo",
     gender: "unisex",
     stock: 20,
-    image: "https://placehold.co/500x500/6b6b6b/ffffff?text=Pantalon+Jean+Baggy+Plomo",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_vterl7vterl7vter.png",
   },
   {
     id: 5,
@@ -56,7 +56,7 @@ export const products: Product[] = [
     color: "Celeste",
     gender: "unisex",
     stock: 22,
-    image: "https://placehold.co/500x500/87CEFA/1a1a1a?text=Pantalon+Jean+Celeste",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_yepmfcyepmfcyepm.png",
   },
   {
     id: 6,
@@ -67,7 +67,7 @@ export const products: Product[] = [
     color: "Negro",
     gender: "unisex",
     stock: 18,
-    image: "https://placehold.co/500x500/000000/ffffff?text=Pantalon+Tela+Negro",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_nv8dxmnv8dxmnv8d.png",
   },
   {
     id: 7,
@@ -78,7 +78,7 @@ export const products: Product[] = [
     color: "Plomo",
     gender: "unisex",
     stock: 18,
-    image: "https://placehold.co/500x500/6b6b6b/ffffff?text=Pantalon+Tela+Plomo",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_cl5sprcl5sprcl5s.png",
   },
   {
     id: 8,
@@ -89,7 +89,7 @@ export const products: Product[] = [
     color: "Azul Marino",
     gender: "unisex",
     stock: 18,
-    image: "https://placehold.co/500x500/0b3d91/ffffff?text=Pantalon+Tela+Azul+Marino",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_xr9rv8xr9rv8xr9r.png",
   },
   // Chaquetas de Cuero
   {
@@ -101,7 +101,7 @@ export const products: Product[] = [
     color: "Negro",
     gender: "unisex",
     stock: 10,
-    image: "https://placehold.co/500x500/000000/ffffff?text=Chaqueta+Cuero+Negra",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_70hu0y70hu0y70hu.png",
   },
   {
     id: 10,
@@ -112,7 +112,7 @@ export const products: Product[] = [
     color: "Café",
     gender: "unisex",
     stock: 10,
-    image: "https://placehold.co/500x500/4b2e00/ffffff?text=Chaqueta+Cuero+Cafe",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_75dgjx75dgjx75dg.png",
   },
   // Camisas de Lino
   {
@@ -122,9 +122,9 @@ export const products: Product[] = [
     category: "camisas",
     size: "M",
     color: "Blanca",
-    gender: "unisex",
+    gender: "hombre",
     stock: 25,
-    image: "https://placehold.co/500x500/f5f5f5/1a1a1a?text=Camisa+Lino+Blanca",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_2y2hik2y2hik2y2h.png",
   },
   {
     id: 12,
@@ -133,9 +133,9 @@ export const products: Product[] = [
     category: "camisas",
     size: "M",
     color: "Negra",
-    gender: "unisex",
+    gender: "hombre",
     stock: 25,
-    image: "https://placehold.co/500x500/000000/ffffff?text=Camisa+Lino+Negra",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_gyiijlgyiijlgyii.png",
   },
   {
     id: 13,
@@ -144,9 +144,9 @@ export const products: Product[] = [
     category: "camisas",
     size: "M",
     color: "Crema",
-    gender: "unisex",
+    gender: "hombre",
     stock: 25,
-    image: "https://placehold.co/500x500/FFF5E1/1a1a1a?text=Camisa+Lino+Crema",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_w14veyw14veyw14v.png",
   },
   {
     id: 14,
@@ -155,9 +155,9 @@ export const products: Product[] = [
     category: "camisas",
     size: "M",
     color: "Azul Marino",
-    gender: "unisex",
+    gender: "hombre",
     stock: 25,
-    image: "https://placehold.co/500x500/0b3d91/ffffff?text=Camisa+Lino+Azul+Marino",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_ola2jgola2jgola2.png",
   },
   // Camisetas Polo
   {
@@ -167,9 +167,9 @@ export const products: Product[] = [
     category: "polos",
     size: "M",
     color: "Negra",
-    gender: "unisex",
+    gender: "hombre",
     stock: 28,
-    image: "https://placehold.co/500x500/000000/ffffff?text=Camiseta+Polo+Negra",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_xt7wrkxt7wrkxt7w.png",
   },
   {
     id: 16,
@@ -178,9 +178,9 @@ export const products: Product[] = [
     category: "polos",
     size: "M",
     color: "Ploma",
-    gender: "unisex",
+    gender: "hombre",
     stock: 28,
-    image: "https://placehold.co/500x500/6b6b6b/ffffff?text=Camiseta+Polo+Ploma",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_c71yzpc71yzpc71y.png",
   },
   // Chaquetas Puffer
   {
@@ -192,7 +192,7 @@ export const products: Product[] = [
     color: "Negra",
     gender: "unisex",
     stock: 12,
-    image: "https://placehold.co/500x500/000000/ffffff?text=Chaqueta+Puffer+Negra",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_va8aenva8aenva8a.png",
   },
   {
     id: 18,
@@ -203,18 +203,111 @@ export const products: Product[] = [
     color: "Gris",
     gender: "unisex",
     stock: 12,
-    image: "https://placehold.co/500x500/808080/ffffff?text=Chaqueta+Puffer+Gris",
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_6hyutf6hyutf6hyu.png",
+  },
+  // Vestidos
+  {
+    id: 19,
+    name: "Vestido Elegante Negro",
+    price: 79.99,
+    category: "vestidos",
+    size: "M",
+    color: "Negro",
+    gender: "mujer",
+    stock: 16,
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_mohlo0mohlo0mohl.png",
+  },
+  {
+    id: 20,
+    name: "Vestido Elegante Blanco",
+    price: 79.99,
+    category: "vestidos",
+    size: "M",
+    color: "Blanco",
+    gender: "mujer",
+    stock: 16,
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_4j9c9o4j9c9o4j9c.png",
+  },
+  {
+    id: 21,
+    name: "Vestido Elegante Gris",
+    price: 79.99,
+    category: "vestidos",
+    size: "M",
+    color: "Gris",
+    gender: "mujer",
+    stock: 16,
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_1wrlha1wrlha1wrl.png",
+  },
+  // Pantalones de mujer
+  {
+    id: 22,
+    name: "Pantalón Jean Acampanado Negro",
+    price: 59.99,
+    category: "pantalones",
+    size: "M",
+    color: "Negro",
+    gender: "mujer",
+    stock: 18,
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_ninekcninekcnine.png",
+  },
+  {
+    id: 23,
+    name: "Pantalón Jean Acampanado Plomo",
+    price: 59.99,
+    category: "pantalones",
+    size: "M",
+    color: "Plomo",
+    gender: "mujer",
+    stock: 18,
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_mspvpgmspvpgmspv.png",
+  },
+  {
+    id: 24,
+    name: "Pantalón Jean Acampanado Celeste",
+    price: 59.99,
+    category: "pantalones",
+    size: "M",
+    color: "Celeste",
+    gender: "mujer",
+    stock: 18,
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_s1xzkos1xzkos1xz.png",
+  },
+  // Tops
+  {
+    id: 25,
+    name: "Top Blanco",
+    price: 29.99,
+    category: "tops",
+    size: "S",
+    color: "Blanco",
+    gender: "mujer",
+    stock: 24,
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_on2iswon2iswon2i.png",
+  },
+  {
+    id: 26,
+    name: "Top Negro",
+    price: 29.99,
+    category: "tops",
+    size: "S",
+    color: "Negro",
+    gender: "mujer",
+    stock: 24,
+    image: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/Gemini_Generated_Image_qa1n5eqa1n5eqa1n.png",
   },
 ];
 
 export const categories = [
   { name: "Camisetas", slug: "camisetas", count: 2 },
-  { name: "Pantalones", slug: "pantalones", count: 6 },
+  { name: "Pantalones", slug: "pantalones", count: 9 },
   { name: "Camisas", slug: "camisas", count: 4 },
   { name: "Chaquetas", slug: "chaquetas", count: 4 },
   { name: "Polos", slug: "polos", count: 2 },
+  { name: "Vestidos", slug: "vestidos", count: 3 },
+  { name: "Tops", slug: "tops", count: 2 },
 ];
 
 export const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
-export const colors = ["Negro", "Blanco", "Azul", "Rojo", "Verde", "Beige"];
+export const colors = ["Negro", "Blanco", "Plomo", "Celeste", "Azul Marino", "Café", "Crema", "Gris"];
 export const genders = ["hombre", "mujer", "unisex"];

@@ -105,37 +105,43 @@ export function CatalogPage() {
   }, [categoryParam, searchQuery, selectedSizes, selectedColors, selectedGenders]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="space-y-8">
       {/* WCAG Operabilidad: Breadcrumbs para orientación */}
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink href="/">Inicio</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Catálogo</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <div className="rounded-[1.75rem] border border-[color:var(--border)] bg-white/80 p-4 shadow-sm backdrop-blur-sm">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">Inicio</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Catálogo</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            {searchQuery
-              ? `Búsqueda: "${searchQuery}"`
-              : categoryParam
-              ? `Categoría: ${categoryParam}`
-              : "Catálogo completo"}
-          </h1>
-          {/* Nielsen #1: Visibilidad del estado del sistema */}
-          <p className="text-gray-600" aria-live="polite" aria-atomic="true">
-            {filteredProducts.length} productos encontrados
-          </p>
-        </div>
+      <section className="rounded-[2rem] border border-[color:var(--border)] bg-[linear-gradient(135deg,rgba(255,250,244,0.96),rgba(238,224,208,0.9))] p-6 shadow-[0_24px_70px_-42px_rgba(24,18,15,0.55)] md:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="mb-3 inline-flex rounded-full border border-[color:var(--border)] bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">
+              Catálogo interactivo
+            </p>
+            <h1 className="font-display text-4xl tracking-tight md:text-5xl">
+              {searchQuery
+                ? `Búsqueda: "${searchQuery}"`
+                : categoryParam
+                ? `Categoría: ${categoryParam}`
+                : "Catálogo completo"}
+            </h1>
+            {/* Nielsen #1: Visibilidad del estado del sistema */}
+            <p className="mt-3 text-lg text-muted-foreground" aria-live="polite" aria-atomic="true">
+              {filteredProducts.length} productos encontrados
+            </p>
+          </div>
 
-        {/* View Controls - Nielsen #7: Flexibilidad */}
-        <div className="flex gap-2" role="group" aria-label="Opciones de visualización">
+          {/* View Controls - Nielsen #7: Flexibilidad */}
+          <div className="flex flex-wrap gap-2 rounded-full border border-[color:var(--border)] bg-white/80 p-2" role="group" aria-label="Opciones de visualización">
           <Button
             variant={viewMode === "grid" ? "default" : "outline"}
             size="icon"
@@ -164,25 +170,26 @@ export function CatalogPage() {
             <Filter size={20} className="mr-2" />
             Filtros
           </Button>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex flex-col gap-6 lg:flex-row">
         {/* Filters Sidebar - WCAG Comprensibilidad: Controles agrupados lógicamente */}
         {showFilters && (
           <aside
-            className="w-full md:w-64 flex-shrink-0"
+            className="w-full flex-shrink-0 lg:w-80"
             aria-label="Filtros de productos"
           >
-            <Card className="p-4 border-2">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-bold text-lg">Filtros</h2>
+            <Card className="sticky top-28 p-5">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="font-display text-2xl tracking-tight">Filtros</h2>
                 {(selectedSizes.length > 0 || selectedColors.length > 0 || selectedGenders.length > 0) && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={clearFilters}
-                    className="text-sm underline"
+                    className="text-sm"
                   >
                     Limpiar
                   </Button>
@@ -191,10 +198,10 @@ export function CatalogPage() {
 
               {/* Gender Filters */}
               <div className="mb-6">
-                <h3 className="font-bold mb-3">Género</h3>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Género</h3>
                 <div className="space-y-2">
                   {genders.map((gender) => (
-                    <div key={gender} className="flex items-center">
+                    <div key={gender} className="flex items-center rounded-2xl border border-transparent px-2 py-1 hover:border-[color:var(--border)] hover:bg-accent/30">
                       <Checkbox
                         id={`gender-${gender}`}
                         checked={selectedGenders.includes(gender)}
@@ -214,10 +221,10 @@ export function CatalogPage() {
 
               {/* Size Filters */}
               <div className="mb-6">
-                <h3 className="font-bold mb-3">Tallas</h3>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Tallas</h3>
                 <div className="space-y-2">
                   {sizes.map((size) => (
-                    <div key={size} className="flex items-center">
+                    <div key={size} className="flex items-center rounded-2xl border border-transparent px-2 py-1 hover:border-[color:var(--border)] hover:bg-accent/30">
                       <Checkbox
                         id={`size-${size}`}
                         checked={selectedSizes.includes(size)}
@@ -237,10 +244,10 @@ export function CatalogPage() {
 
               {/* Color Filters */}
               <div>
-                <h3 className="font-bold mb-3">Colores</h3>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Colores</h3>
                 <div className="space-y-2">
                   {colors.map((color) => (
-                    <div key={color} className="flex items-center">
+                    <div key={color} className="flex items-center rounded-2xl border border-transparent px-2 py-1 hover:border-[color:var(--border)] hover:bg-accent/30">
                       <Checkbox
                         id={`color-${color}`}
                         checked={selectedColors.includes(color)}
@@ -264,12 +271,12 @@ export function CatalogPage() {
         {/* Products Grid/List - Nielsen #8: Diseño minimalista */}
         <div className="flex-1">
           {filteredProducts.length === 0 ? (
-            <Card className="p-12 text-center border-2">
-              <p className="text-xl font-bold mb-2">No hay productos</p>
-              <p className="text-gray-600 mb-4">
+            <Card className="p-12 text-center">
+              <p className="font-display text-3xl mb-2 tracking-tight">No hay productos</p>
+              <p className="text-muted-foreground mb-4">
                 No se encontraron productos con los filtros seleccionados
               </p>
-              <Button onClick={clearFilters} variant="outline" className="border-2">
+              <Button onClick={clearFilters} variant="outline">
                 Limpiar filtros
               </Button>
             </Card>
@@ -277,7 +284,7 @@ export function CatalogPage() {
             <div
               className={
                 viewMode === "grid"
-                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                  ? "grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"
                   : "flex flex-col gap-4"
               }
             >
@@ -288,28 +295,50 @@ export function CatalogPage() {
                   className="focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <Card
-                    className={`border-2 hover:border-black transition-colors ${
+                    className={`overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_30px_70px_-42px_rgba(24,18,15,0.58)] ${
                       viewMode === "list" ? "flex gap-4 p-4" : "p-4"
                     }`}
                   >
                     {/* WCAG Perceptibilidad: Imagen con texto alternativo */}
                     <div
-                      className={`border-2 border-gray-300 bg-gray-100 flex items-center justify-center overflow-hidden ${
-                        viewMode === "list" ? "w-32 h-32 flex-shrink-0" : "h-48 mb-4"
+                      className={`overflow-hidden rounded-[1.25rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.84),rgba(241,229,216,0.94))] flex items-center justify-center ${
+                        viewMode === "list" ? "h-36 w-36 flex-shrink-0" : "mb-4 h-56"
                       }`}
                     >
-                      <img
-                        src={getPublicUrlFromPath(product.image)}
-                        alt={`${product.name} - ${product.color} - ${product.gender}`}
-                        className="w-full h-full object-contain"
-                      />
+                      {product.images && product.images.length > 1 ? (
+                        <div className="flex items-center justify-center w-full h-full">
+                          <img
+                            src={getPublicUrlFromPath(product.image)}
+                            alt={`${product.name} - ${product.color} - ${product.gender}`}
+                            className="max-h-full max-w-full object-contain transition-transform duration-500 hover:scale-105"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center w-full h-full p-4 bg-[rgba(248,241,233,0.6)]">
+                          <img
+                            src={getPublicUrlFromPath(product.image)}
+                            alt={`${product.name} - ${product.color} - ${product.gender}`}
+                            className="max-h-full max-w-full object-contain transition-transform duration-500 hover:scale-105"
+                          />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold mb-2">{product.name}</h3>
-                      <p className="text-gray-600 text-sm mb-2 capitalize">
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-[color:var(--border)] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          {product.category}
+                        </span>
+                        {product.stock < 5 && (
+                          <span className="rounded-full bg-amber-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-900">
+                            Stock bajo
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-display text-2xl mb-2 tracking-tight">{product.name}</h3>
+                      <p className="mb-2 text-sm capitalize text-muted-foreground">
                         {product.gender} • <span style={{ unicodeBidi: 'isolate' }}>{product.size}</span> • {product.color}
                       </p>
-                      <p className="text-xl font-bold" aria-label={`Precio: ${product.price} dólares`}>
+                      <p className="text-2xl font-semibold" aria-label={`Precio: ${product.price} dólares`}>
                         {product.price.toFixed(2)}$
                       </p>
                     </div>

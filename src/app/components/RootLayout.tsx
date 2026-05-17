@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { CartProvider, useCart } from "../context/CartContext";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { products } from "../data/products";
+import { brandLogoUrl } from "../data/brandAssets";
 
 /**
  * ANÁLISIS HEURÍSTICO - Nielsen #3: Control y libertad del usuario
@@ -68,38 +69,49 @@ function RootLayoutContent() {
     }
   };
 
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="relative min-h-screen overflow-x-hidden text-foreground">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-24 left-[-8rem] h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(168,111,67,0.22),transparent_70%)] blur-3xl" />
+        <div className="absolute right-[-6rem] top-32 h-96 w-96 rounded-full bg-[radial-gradient(circle,rgba(214,186,149,0.26),transparent_72%)] blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(24,18,15,0.08),transparent_72%)] blur-3xl" />
+      </div>
       {/* WCAG - Operabilidad: Skip to main content */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-black focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-full focus:bg-black focus:px-4 focus:py-2 focus:text-white"
         aria-label="Saltar al contenido principal"
       >
         Ir al contenido principal
       </a>
 
       {/* Header - Nielsen #4: Consistencia y estándares */}
-      <header className="bg-white border-b-2 border-gray-300 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
+      <header className="sticky top-0 z-40 border-b border-white/70 bg-[rgba(248,241,233,0.82)] backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 py-4">
+          <div className="flex items-center justify-between gap-4 rounded-[1.5rem] border border-[color:var(--border)] bg-white/75 px-4 py-3 shadow-[0_18px_50px_-32px_rgba(24,18,15,0.55)] backdrop-blur-xl md:px-5">
             {/* Logo - WCAG Perceptibilidad: alt text descriptivo */}
             <Link
               to="/"
-              className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-black"
+              className="flex items-center gap-3 rounded-full focus:outline-none focus:ring-2 focus:ring-black"
               aria-label="CrowStore - Ir a página principal"
             >
-              <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl" aria-hidden="true">C</span>
+              <img
+                src={brandLogoUrl}
+                alt="Logo de CrowStore"
+                className="h-11 w-11 rounded-full object-cover border border-[color:var(--border)] bg-white shadow-sm"
+              />
+              <div className="hidden sm:block">
+                <span className="block font-display text-2xl leading-none">CrowStore</span>
               </div>
-              <span className="text-2xl font-bold">CrowStore</span>
             </Link>
 
             {/* Desktop Navigation - Nielsen #6: Reconocimiento vs recuerdo */}
-            <nav className="hidden md:flex items-center gap-6" aria-label="Navegación principal">
+            <nav className="hidden md:flex items-center gap-2 rounded-full border border-[color:var(--border)] bg-white/80 p-1" aria-label="Navegación principal">
               <Link
                 to="/"
-                className="flex items-center gap-2 hover:underline focus:outline-none focus:ring-2 focus:ring-black px-2 py-1"
+                className={`flex items-center gap-2 rounded-full px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-black ${isActive("/") ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent/60"}`}
                 aria-label="Inicio"
               >
                 <Home size={20} aria-hidden="true" />
@@ -107,13 +119,13 @@ function RootLayoutContent() {
               </Link>
               <Link
                 to="/catalogo"
-                className="hover:underline focus:outline-none focus:ring-2 focus:ring-black px-2 py-1"
+                className={`rounded-full px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-black ${isActive("/catalogo") ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent/60"}`}
               >
                 Catálogo
               </Link>
               <Link
                 to="/ayuda"
-                className="flex items-center gap-2 hover:underline focus:outline-none focus:ring-2 focus:ring-black px-2 py-1"
+                className={`flex items-center gap-2 rounded-full px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-black ${isActive("/ayuda") ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent/60"}`}
                 aria-label="Ayuda y preguntas frecuentes"
               >
                 <HelpCircle size={20} aria-hidden="true" />
@@ -217,23 +229,23 @@ function RootLayoutContent() {
               className="md:hidden mt-4 pb-4 border-t-2 border-gray-200 pt-4"
               aria-label="Menú móvil"
             >
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 <Link
                   to="/"
-                  className="flex items-center gap-2 px-2 py-2 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-black"
+                  className="flex items-center gap-2 rounded-xl px-3 py-3 hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <Home size={20} />
                   <span>Inicio</span>
                 </Link>
                 <Link
                   to="/catalogo"
-                  className="px-2 py-2 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-black"
+                  className="rounded-xl px-3 py-3 hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   Catálogo
                 </Link>
                 <Link
                   to="/ayuda"
-                  className="flex items-center gap-2 px-2 py-2 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-black"
+                  className="flex items-center gap-2 rounded-xl px-3 py-3 hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   <HelpCircle size={20} />
                   <span>Ayuda</span>
@@ -246,9 +258,9 @@ function RootLayoutContent() {
 
       {/* Search Dialog */}
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-[1.75rem] border border-[color:var(--border)] bg-white/95 shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Buscar productos</DialogTitle>
+            <DialogTitle className="font-display text-2xl">Buscar productos</DialogTitle>
             <DialogDescription>
               Encuentra productos por nombre, categoría o color
             </DialogDescription>
@@ -261,10 +273,10 @@ function RootLayoutContent() {
                 placeholder="Buscar por nombre, categoría o color..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 border-2 focus:ring-2 focus:ring-black"
+                className="flex-1"
                 autoFocus
               />
-              <Button type="submit" className="bg-black text-white hover:bg-gray-800">
+              <Button type="submit">
                 Buscar
               </Button>
             </div>
@@ -282,29 +294,41 @@ function RootLayoutContent() {
                     <Link
                       key={product.id}
                       to={`/producto/${product.id}`}
-                      className="flex items-center gap-3 p-3 border-2 hover:border-black transition-colors focus:outline-none focus:ring-2 focus:ring-black"
+                      className="flex items-center gap-3 rounded-2xl border border-transparent p-3 transition-all hover:border-[color:var(--border)] hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-black"
                       onClick={() => setSearchOpen(false)}
                     >
-                      <div className="w-16 h-16 border-2 border-gray-300 bg-gray-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        <img
-                          src={product.image}
-                          alt={`${product.name} - ${product.color}`}
-                          className="w-full h-full object-contain"
-                        />
+                      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.85),rgba(241,229,216,0.95))]">
+                        {product.images && product.images.length > 1 ? (
+                            <div className="flex items-center justify-center w-full h-full">
+                              <img
+                                src={product.image}
+                                alt={`${product.name} - ${product.color}`}
+                                className="max-h-full max-w-full object-contain"
+                              />
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center w-full h-full p-1 bg-[rgba(248,241,233,0.65)]">
+                              <img
+                                src={product.image}
+                                alt={`${product.name} - ${product.color}`}
+                                className="max-h-full max-w-full object-contain"
+                              />
+                            </div>
+                          )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-bold">{product.name}</p>
+                        <p className="font-semibold">{product.name}</p>
                         <p className="text-sm text-gray-600 capitalize">
                           {product.category} • {product.gender} • {product.color}
                         </p>
                       </div>
-                      <p className="font-bold text-lg">${product.price.toFixed(2)}</p>
+                      <p className="font-semibold text-lg">${product.price.toFixed(2)}</p>
                     </Link>
                   ))}
                   {filteredProducts.length > 8 && (
                     <Button
                       variant="outline"
-                      className="w-full border-2"
+                      className="w-full"
                       onClick={() => {
                         setSearchOpen(false);
                         navigate(`/catalogo?busqueda=${encodeURIComponent(searchQuery)}`);
@@ -315,7 +339,7 @@ function RootLayoutContent() {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8 border-2 border-dashed">
+                <div className="rounded-2xl border border-dashed border-[color:var(--border)] py-8 text-center">
                   <p className="text-gray-600 mb-2">No se encontraron productos</p>
                   <p className="text-sm text-gray-500">
                     Intenta con otro término de búsqueda
@@ -328,22 +352,24 @@ function RootLayoutContent() {
       </Dialog>
 
       {/* Main Content - WCAG Robustez: Estructura semántica */}
-      <main id="main-content" className="min-h-[calc(100vh-200px)]">
-        <Outlet />
+      <main id="main-content" className="relative z-10 min-h-[calc(100vh-220px)]">
+        <div className="mx-auto max-w-7xl px-4 py-8 md:py-10">
+          <Outlet />
+        </div>
       </main>
 
       {/* Footer - Nielsen #4: Consistencia */}
-      <footer className="bg-white border-t-2 border-gray-300 mt-12">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <footer className="relative z-10 mt-12 border-t border-white/70 bg-[rgba(248,241,233,0.86)] backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 py-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div>
-              <h3 className="font-bold mb-3">CrowStore</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="font-display mb-3 text-2xl tracking-tight">CrowStore</h3>
+              <p className="text-sm text-muted-foreground">
                 Tu tienda de ropa en línea. Moda accesible para todos.
               </p>
             </div>
             <div>
-              <h3 className="font-bold mb-3">Enlaces útiles</h3>
+              <h3 className="font-display mb-3 text-2xl tracking-tight">Enlaces útiles</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <Link
@@ -383,14 +409,14 @@ function RootLayoutContent() {
               </ul>
             </div>
             <div className="overflow-hidden">
-              <h3 className="font-bold mb-3">Contacto</h3>
-              <p className="text-sm text-gray-600 break-all">
+              <h3 className="font-display mb-3 text-2xl tracking-tight">Contacto</h3>
+              <p className="text-sm text-muted-foreground break-all">
                 Email: michael2230@gmail.com<br />
                 Tel: +593 0979246567
               </p>
             </div>
           </div>
-          <div className="mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-600">
+          <div className="mt-8 border-t border-[color:var(--border)] pt-4 text-center text-sm text-muted-foreground">
             © 2026 CrowStore. Todos los derechos reservados.
           </div>
         </div>

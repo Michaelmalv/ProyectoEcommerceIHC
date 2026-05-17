@@ -1,0 +1,27 @@
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	min-height: 100vh;
+	color: var(--foreground);
+	background:
+		radial-gradient(circle at top left, rgba(168, 111, 67, 0.14), transparent 32%),
+		radial-gradient(circle at top right, rgba(214, 186, 149, 0.2), transparent 28%),
+		linear-gradient(180deg, #fbf7f2 0%, #f3e7da 100%);
+	background-attachment: fixed;
+}
+
+body::selection {
+	background: rgba(168, 111, 67, 0.22);
+	color: #18120f;
+}
+
+a {
+	text-decoration-thickness: 0.09em;
+	text-underline-offset: 0.18em;
+}
+
+#main-content {
+	scroll-margin-top: 6rem;
+}

@@ -81,67 +81,70 @@ export function ConfirmationPage() {
   const status = getStatusInfo();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="space-y-6">
       {/* Success Header */}
-      <Card className="p-8 border-2 border-green-600 bg-green-50 mb-6">
+      <Card className="border border-green-200 bg-[linear-gradient(135deg,rgba(236,253,245,0.98),rgba(255,255,255,0.98))] p-8 text-center shadow-[0_24px_70px_-42px_rgba(24,18,15,0.55)]">
         <div className="flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-green-600 rounded-full flex items-center justify-center mb-4">
+          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-600 shadow-lg">
             <CheckCircle size={48} className="text-white" aria-hidden="true" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">¡Pedido confirmado!</h1>
-          <p className="text-lg text-gray-700 mb-4">
+          <p className="mb-3 inline-flex rounded-full border border-green-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-green-700">
+            Confirmación final
+          </p>
+          <h1 className="font-display text-4xl tracking-tight mb-2">¡Pedido confirmado!</h1>
+          <p className="text-lg text-muted-foreground mb-4">
             Gracias por tu compra, {name || "cliente"}
           </p>
-          <div className="bg-white border-2 border-green-600 px-6 py-3 rounded">
-            <p className="text-sm text-gray-600">Número de pedido</p>
-            <p className="text-2xl font-bold">{orderId}</p>
+          <div className="rounded-[1.5rem] border border-green-200 bg-white px-6 py-4 shadow-sm">
+            <p className="text-sm text-muted-foreground">Número de pedido</p>
+            <p className="font-display text-3xl tracking-tight">{orderId}</p>
           </div>
         </div>
       </Card>
 
       {/* Order Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <Card className="p-6 border-2">
-          <h2 className="text-xl font-bold mb-4">Detalles del pedido</h2>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <Card className="p-6">
+          <h2 className="font-display text-2xl mb-4 tracking-tight">Detalles del pedido</h2>
           <div className="space-y-3">
             <div>
-              <p className="text-sm text-gray-600">Total pagado</p>
-              <p className="text-2xl font-bold">{total?.toFixed(2) || "0.00"}$</p>
+              <p className="text-sm text-muted-foreground">Total pagado</p>
+              <p className="text-3xl font-semibold">{total?.toFixed(2) || "0.00"}$</p>
             </div>
             <Separator />
             <div className="overflow-hidden">
-              <p className="text-sm text-gray-600">Email de confirmación</p>
-              <p className="font-bold break-all text-sm sm:text-base">{email || "No especificado"}</p>
+              <p className="text-sm text-muted-foreground">Email de confirmación</p>
+              <p className="break-all text-sm font-semibold sm:text-base">{email || "No especificado"}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Fecha del pedido</p>
-              <p className="font-bold">{new Date().toLocaleDateString("es-ES")}</p>
+              <p className="text-sm text-muted-foreground">Fecha del pedido</p>
+              <p className="font-semibold">{new Date().toLocaleDateString("es-ES")}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 border-2">
-          <h2 className="text-xl font-bold mb-4">Información de envío</h2>
+        <Card className="p-6">
+          <h2 className="font-display text-2xl mb-4 tracking-tight">Información de envío</h2>
           <div className="space-y-3">
             <div>
-              <p className="text-sm text-gray-600">Destinatario</p>
-              <p className="font-bold">{name || "No especificado"}</p>
+              <p className="text-sm text-muted-foreground">Destinatario</p>
+              <p className="font-semibold">{name || "No especificado"}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Dirección</p>
-              <p className="font-bold">Calle Principal 12 de Octubre</p>
+              <p className="text-sm text-muted-foreground">Dirección</p>
+              <p className="font-semibold">Calle Principal 12 de Octubre</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Tiempo estimado</p>
-              <p className="font-bold">2-3 días laborables</p>
+              <p className="text-sm text-muted-foreground">Tiempo estimado</p>
+              <p className="font-semibold">2-3 días laborables</p>
             </div>
           </div>
         </Card>
       </div>
 
       {/* Tracking Simulation */}
-      <Card className="p-6 border-2 mb-6">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+      <Card className="p-6">
+        <h2 className="font-display mb-6 flex items-center gap-2 text-2xl tracking-tight">
           <Truck size={24} aria-hidden="true" />
           Seguimiento del pedido
         </h2>
@@ -235,23 +238,23 @@ export function ConfirmationPage() {
       </Card>
 
       {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <div className="flex flex-col justify-center gap-4 sm:flex-row">
         <Link to="/catalogo">
-          <Button size="lg" className="bg-black text-white hover:bg-gray-800 w-full sm:w-auto">
+          <Button size="lg" className="w-full sm:w-auto">
             Seguir comprando
           </Button>
         </Link>
         <Link to="/perfil">
-          <Button variant="outline" size="lg" className="border-2 w-full sm:w-auto">
+          <Button variant="outline" size="lg" className="w-full sm:w-auto">
             Ver mis pedidos
           </Button>
         </Link>
       </div>
 
       {/* Help */}
-      <Card className="mt-6 p-6 border-2 bg-gray-50">
-        <h3 className="font-bold mb-2">¿Necesitas ayuda?</h3>
-        <p className="text-sm text-gray-600 mb-3">
+      <Card className="p-6">
+        <h3 className="font-display mb-2 text-2xl tracking-tight">¿Necesitas ayuda?</h3>
+        <p className="mb-3 text-sm text-muted-foreground">
           Si tienes alguna pregunta sobre tu pedido, contáctanos:
         </p>
         <div className="text-sm space-y-1 overflow-hidden">

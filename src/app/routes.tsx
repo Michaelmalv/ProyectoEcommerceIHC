@@ -11,7 +11,6 @@ import { HelpPage } from "./pages/HelpPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { TrackOrderPage } from "./pages/TrackOrderPage";
-import { AdminPage } from "./pages/AdminPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 export const router = createBrowserRouter([
@@ -28,7 +27,6 @@ export const router = createBrowserRouter([
       { path: "perfil", Component: ProfilePage },
       { path: "ayuda", Component: HelpPage },
       { path: "seguimiento", Component: TrackOrderPage },
-      { path: "admin", Component: AdminPage },
       { path: "login", Component: LoginPage },
       { path: "registro", Component: RegisterPage },
       { path: "*", Component: NotFoundPage },
