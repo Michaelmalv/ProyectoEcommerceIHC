@@ -5,6 +5,13 @@ import { Card } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { useAuth } from "../context/AuthContext";
+import {
+  validateEmail,
+  validateFullName,
+  validatePhone,
+  validatePassword,
+  passwordsMatch,
+} from "../utils/validators";
 
 export function RegisterPage() {
   const { register } = useAuth();
@@ -24,14 +31,35 @@ export function RegisterPage() {
     const fullName = formData.get("fullName") as string;
     const phone = formData.get("phone") as string;
 
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden");
+    // Validaciones frontend completas
+    if (!fullName || !validateFullName(fullName)) {
+      setError("Nombre debe tener 2-100 caracteres (solo letras y espacios)");
       setLoading(false);
       return;
     }
 
-    if (password.length < 6) {
+    if (!email || !validateEmail(email)) {
+      setError("Email inválido");
+      setLoading(false);
+      return;
+    }
+
+    if (phone && !validatePhone(phone)) {
+      setError(
+        "Teléfono inválido. Usa: 0999999999 o +593999999999 (solo números, 10 dígitos)"
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (!password || !validatePassword(password)) {
       setError("La contraseña debe tener al menos 6 caracteres");
+      setLoading(false);
+      return;
+    }
+
+    if (!passwordsMatch(password, confirmPassword)) {
+      setError("Las contraseñas no coinciden");
       setLoading(false);
       return;
     }
@@ -66,6 +94,11 @@ export function RegisterPage() {
               required
               className="border-2 focus:ring-2 focus:ring-black"
               placeholder="Juan Pérez"
+                          onKeyDown={(e) => {
+                            if (!/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                              e.preventDefault();
+                            }
+                          }}
             />
           </div>
 
@@ -93,6 +126,20 @@ export function RegisterPage() {
               type="tel"
               className="border-2 focus:ring-2 focus:ring-black"
               placeholder="+593 999 999 999"
+              inputMode="numeric"
+              onKeyDown={(e) => {
+                // Permitir números, +, y teclas de control
+                if (!/[0-9+]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                  e.preventDefault();
+                }
+              }}
+              onChange={(e) => {
+                // Limitar a 13 caracteres (+593) o 10 caracteres (0)
+                const maxLength = e.target.value.startsWith('+') ? 13 : 10;
+                if (e.target.value.length > maxLength) {
+                  e.target.value = e.target.value.slice(0, maxLength);
+                }
+              }}
             />
           </div>
 

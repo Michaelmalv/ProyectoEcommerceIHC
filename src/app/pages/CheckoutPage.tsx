@@ -17,6 +17,20 @@ import {
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { createOrder } from "../../utils/api";
+import {
+  validateEmail,
+  validateFullName,
+  validatePhone,
+  validateAddress,
+  validateCity,
+  validatePostalCode,
+  validateLuhn,
+  validateCVV,
+  validateExpiryDate,
+  formatCardNumber,
+  formatExpiryDate,
+  formatCVV,
+} from "../utils/validators";
 
 /**
  * ANÁLISIS HEURÍSTICO:
@@ -51,33 +65,22 @@ export function CheckoutPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [processing, setProcessing] = useState(false);
   const [expiryDate, setExpiryDate] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cvv, setCvv] = useState("");
 
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "");
-
-    if (value.length >= 2) {
-      value = value.slice(0, 2) + "/" + value.slice(2, 4);
-    }
-
-    setExpiryDate(value);
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCardNumber(e.target.value);
+    setCardNumber(formatted);
   };
 
-  const validateExpiryDate = (expiry: string): boolean => {
-    if (!expiry || expiry.length !== 5) return false;
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatExpiryDate(e.target.value);
+    setExpiryDate(formatted);
+  };
 
-    const [month, year] = expiry.split("/");
-    const monthNum = parseInt(month, 10);
-    const yearNum = parseInt(year, 10);
-
-    if (monthNum < 1 || monthNum > 12) return false;
-
-    const currentYear = new Date().getFullYear() % 100;
-    const currentMonth = new Date().getMonth() + 1;
-
-    if (yearNum < currentYear) return false;
-    if (yearNum === currentYear && monthNum < currentMonth) return false;
-
-    return true;
+  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCVV(e.target.value);
+    setCvv(formatted);
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -90,51 +93,56 @@ export function CheckoutPage() {
       newErrors.general = "El carrito está vacío. Añade productos antes de continuar.";
     }
 
-    // Nielsen #9: Mensajes de error claros
-    if (!formData.get("email")) {
-      newErrors.email = "El email es obligatorio";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.get("email") as string)) {
-      newErrors.email = "Email inválido";
+    // Email
+    const email = (formData.get("email") as string)?.trim();
+    if (!email || !validateEmail(email)) {
+      newErrors.email = "Email inválido (ej: usuario@ejemplo.com)";
     }
 
-    if (!formData.get("name")) {
-      newErrors.name = "El nombre completo es obligatorio";
+    // Nombre completo
+    const name = (formData.get("name") as string)?.trim();
+    if (!name || !validateFullName(name)) {
+      newErrors.name = "Nombre debe tener 2-100 caracteres (solo letras y espacios)";
     }
 
-    if (!formData.get("phone")) {
-      newErrors.phone = "El teléfono es obligatorio (para confirmación por SMS)";
-    } else {
-      const phone = (formData.get("phone") as string).trim();
-      // Validar formato: +593999999999 o 0999999999 o +593 999 999 999
-      if (!/^(\+593|0)[0-9\s\-()]{6,}$/.test(phone)) {
-        newErrors.phone = "Teléfono inválido. Ejemplo: +593999999999 o 0999999999";
-      }
+    // Teléfono (opcional)
+    const phone = (formData.get("phone") as string)?.trim();
+    if (phone && !validatePhone(phone)) {
+      newErrors.phone = "Teléfono debe ser: 0999999999 o +593999999999 (solo números, 10 dígitos)";
     }
 
-    if (!formData.get("address")) {
-      newErrors.address = "La dirección es obligatoria";
+    // Dirección
+    const address = (formData.get("address") as string)?.trim();
+    if (!address || !validateAddress(address)) {
+      newErrors.address = "Dirección debe tener 5-200 caracteres";
     }
 
-    if (!formData.get("city")) {
-      newErrors.city = "La ciudad es obligatoria";
+    // Ciudad
+    const city = (formData.get("city") as string)?.trim();
+    if (!city || !validateCity(city)) {
+      newErrors.city = "Ciudad debe tener 2-50 caracteres (solo letras)";
     }
 
-    if (!formData.get("postal")) {
-      newErrors.postal = "El código postal es obligatorio";
+    // Código postal
+    const postal = (formData.get("postal") as string)?.trim();
+    if (!postal || !validatePostalCode(postal)) {
+      newErrors.postal = "Código postal debe ser 5 dígitos (ej: 28001)";
     }
 
-    const cardNumber = (formData.get("cardNumber") as string)?.replace(/\s/g, "");
-    if (!cardNumber || cardNumber.length < 13) {
-      newErrors.cardNumber = "Número de tarjeta inválido";
+    // Tarjeta de crédito - validar con Luhn
+    const cardNumberClean = cardNumber.replace(/\s/g, "");
+    if (!cardNumberClean || !validateLuhn(cardNumberClean)) {
+      newErrors.cardNumber = "Número de tarjeta inválido (falla validación Luhn)";
     }
 
-    if (!validateExpiryDate(expiryDate)) {
-      newErrors.expiry = "La fecha de expiración debe ser válida y futura";
+    // Fecha de expiración
+    if (!expiryDate || !validateExpiryDate(expiryDate)) {
+      newErrors.expiry = "Fecha de expiración debe ser válida y futura (MM/AA)";
     }
 
-    const cvv = formData.get("cvv") as string;
-    if (!cvv || cvv.length !== 3 || !/^\d+$/.test(cvv)) {
-      newErrors.cvv = "CVV debe ser de 3 dígitos";
+    // CVV
+    if (!cvv || !validateCVV(cvv)) {
+      newErrors.cvv = "CVV debe ser exactamente 3 dígitos";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -152,10 +160,10 @@ export function CheckoutPage() {
       items: cartItems,
       total: orderTotal,
       customerInfo: {
-        name: formData.get("name") as string,
-        email: formData.get("email") as string,
-        address: formData.get("address") as string,
-        phone: formData.get("phone") as string || "",
+        name: name,
+        email: email,
+        address: address,
+        phone: phone || "",
       },
       userId: user?.id, // Incluir el ID del usuario si está autenticado
     };
@@ -261,32 +269,51 @@ export function CheckoutPage() {
                     required
                     aria-required="true"
                     aria-invalid={errors.name ? "true" : "false"}
-                    aria-describedby={errors.name ? "name-error" : undefined}
+                    aria-describedby={errors.name ? "name-error" : "name-help"}
                     className="border-2 focus:ring-2 focus:ring-black"
                     placeholder="Juan Pérez"
+                                      onKeyDown={(e) => {
+                                        if (!/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                                          e.preventDefault();
+                                        }
+                                      }}
                   />
                   {errors.name && (
                     <p id="name-error" className="text-sm text-red-600 mt-1" role="alert">
                       {errors.name}
                     </p>
                   )}
+                  {!errors.name && (
+                    <p id="name-help" className="text-xs text-gray-600 mt-1">
+                      2-50 caracteres (solo letras y espacios)
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <Label htmlFor="phone" className="font-bold">
-                    Teléfono <span className="text-red-600" aria-label="obligatorio">*</span>
-                    <span className="text-sm text-gray-600 font-normal ml-1">(para confirmación por SMS)</span>
+                    Teléfono
                   </Label>
                   <Input
                     id="phone"
                     name="phone"
                     type="tel"
-                    required
-                    aria-required="true"
                     aria-invalid={errors.phone ? "true" : "false"}
                     aria-describedby={errors.phone ? "phone-error" : "phone-help"}
                     className="border-2 focus:ring-2 focus:ring-black"
-                    placeholder="+593 999 999 999"
+                    placeholder="0999999999"
+                    inputMode="numeric"
+                    onKeyDown={(e) => {
+                      if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const maxLength = e.target.value.startsWith('+') ? 13 : 10;
+                      if (e.target.value.length > maxLength) {
+                        e.target.value = e.target.value.slice(0, maxLength);
+                      }
+                    }}
                   />
                   {errors.phone ? (
                     <p id="phone-error" className="text-sm text-red-600 mt-1" role="alert">
@@ -294,7 +321,7 @@ export function CheckoutPage() {
                     </p>
                   ) : (
                     <p id="phone-help" className="text-xs text-gray-600 mt-1">
-                      Formato: +593 o 0 (ej: +593999999999 o 0999999999)
+                      10 dígitos (ej: 0999999999)
                     </p>
                   )}
                 </div>
@@ -322,12 +349,18 @@ export function CheckoutPage() {
                     required
                     aria-required="true"
                     aria-invalid={errors.address ? "true" : "false"}
+                    aria-describedby={errors.address ? "address-error" : "address-help"}
                     className="border-2 focus:ring-2 focus:ring-black"
                     placeholder="Calle Principal 123"
                   />
                   {errors.address && (
-                    <p className="text-sm text-red-600 mt-1" role="alert">
+                    <p id="address-error" className="text-sm text-red-600 mt-1" role="alert">
                       {errors.address}
+                    </p>
+                  )}
+                  {!errors.address && (
+                    <p id="address-help" className="text-xs text-gray-600 mt-1">
+                      5-100 caracteres
                     </p>
                   )}
                 </div>
@@ -342,13 +375,18 @@ export function CheckoutPage() {
                       required
                       aria-required="true"
                       aria-invalid={errors.city ? "true" : "false"}
-                      aria-describedby={errors.city ? "city-error" : undefined}
+                      aria-describedby={errors.city ? "city-error" : "city-help"}
                       className="border-2 focus:ring-2 focus:ring-black"
-                      placeholder="Madrid"
+                      placeholder="Quito"
                     />
                     {errors.city && (
                       <p id="city-error" className="text-sm text-red-600 mt-1" role="alert">
                         {errors.city}
+                      </p>
+                    )}
+                    {!errors.city && (
+                      <p id="city-help" className="text-xs text-gray-600 mt-1">
+                        2-20 caracteres, solo letras
                       </p>
                     )}
                   </div>
@@ -361,13 +399,25 @@ export function CheckoutPage() {
                       required
                       aria-required="true"
                       aria-invalid={errors.postal ? "true" : "false"}
-                      aria-describedby={errors.postal ? "postal-error" : undefined}
+                      aria-describedby={errors.postal ? "postal-error" : "postal-help"}
                       className="border-2 focus:ring-2 focus:ring-black"
                       placeholder="28001"
+                      inputMode="numeric"
+                      maxLength={5}
+                      onKeyDown={(e) => {
+                        if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
                     />
                     {errors.postal && (
                       <p id="postal-error" className="text-sm text-red-600 mt-1" role="alert">
                         {errors.postal}
+                      </p>
+                    )}
+                    {!errors.postal && (
+                      <p id="postal-help" className="text-xs text-gray-600 mt-1">
+                        5 dígitos (ej: 28001)
                       </p>
                     )}
                   </div>
@@ -405,11 +455,24 @@ export function CheckoutPage() {
                       required
                       aria-required="true"
                       aria-invalid={errors.cardNumber ? "true" : "false"}
-                      aria-describedby={errors.cardNumber ? "cardNumber-error" : undefined}
+                      aria-describedby={errors.cardNumber ? "cardNumber-error" : "cardNumber-help"}
+                      value={cardNumber}
+                      onChange={handleCardNumberChange}
+                      inputMode="numeric"
+                      onKeyDown={(e) => {
+                        if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
                     />
                     {errors.cardNumber && (
                       <p id="cardNumber-error" className="text-sm text-red-600 mt-1" role="alert">
                         {errors.cardNumber}
+                      </p>
+                    )}
+                    {!errors.cardNumber && (
+                      <p id="cardNumber-help" className="text-xs text-gray-600 mt-1">
+                        16 dígitos, se formatea automáticamente
                       </p>
                     )}
                   </div>
@@ -428,12 +491,23 @@ export function CheckoutPage() {
                         className="border-2 focus:ring-2 focus:ring-black"
                         maxLength={5}
                         aria-invalid={errors.expiry ? "true" : "false"}
-                        aria-describedby={errors.expiry ? "expiry-error" : undefined}
+                        aria-describedby={errors.expiry ? "expiry-error" : "expiry-help"}
                         required
+                        inputMode="numeric"
+                        onKeyDown={(e) => {
+                          if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                       />
                       {errors.expiry && (
                         <p id="expiry-error" className="text-sm text-red-600 mt-1" role="alert">
                           {errors.expiry}
+                        </p>
+                      )}
+                      {!errors.expiry && (
+                        <p id="expiry-help" className="text-xs text-gray-600 mt-1">
+                          MM/AA
                         </p>
                       )}
                     </div>
@@ -452,6 +526,14 @@ export function CheckoutPage() {
                         aria-invalid={errors.cvv ? "true" : "false"}
                         aria-describedby={errors.cvv ? "cvv-error" : "cvv-help"}
                         required
+                        value={cvv}
+                        onChange={handleCvvChange}
+                        inputMode="numeric"
+                        onKeyDown={(e) => {
+                          if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                       />
                       {errors.cvv ? (
                         <p id="cvv-error" className="text-sm text-red-600 mt-1" role="alert">
@@ -459,7 +541,7 @@ export function CheckoutPage() {
                         </p>
                       ) : (
                         <p id="cvv-help" className="text-xs text-gray-600 mt-1">
-                          3 dígitos en el reverso
+                          Exactamente 3 dígitos en el reverso
                         </p>
                       )}
                     </div>

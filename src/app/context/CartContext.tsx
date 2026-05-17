@@ -10,6 +10,7 @@ export interface Product {
   gender: "hombre" | "mujer" | "unisex";
   stock: number;
   image: string;
+  images?: string[];
 }
 
 export interface CartItem extends Product {

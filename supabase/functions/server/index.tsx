@@ -3,7 +3,6 @@ import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { sendOrderConfirmationEmail } from "./email.tsx";
-import { sendOrderConfirmationSMS } from "./sms.tsx";
 
 const app = new Hono();
 
@@ -142,6 +141,33 @@ app.post("/make-server-69259dc0/orders", async (c) => {
 
     if (itemsError) throw itemsError;
 
+    // Decrementar stock para cada producto del pedido
+    for (const itm of items) {
+      try {
+        const { data: prod, error: prodError } = await supabase
+          .from('products')
+          .select('stock')
+          .eq('id', itm.id)
+          .single();
+
+        if (prodError) throw prodError;
+
+        const currentStock = prod?.stock ?? 0;
+        const newStock = Math.max(0, currentStock - itm.quantity);
+
+        const { error: updError } = await supabase
+          .from('products')
+          .update({ stock: newStock })
+          .eq('id', itm.id);
+
+        if (updError) throw updError;
+      } catch (e) {
+        console.log(`Advertencia: no se pudo actualizar stock para producto ${itm.id}: ${e}`);
+        // No abortamos la creación del pedido por un error al decrementar stock,
+        // pero registramos la advertencia para revisión.
+      }
+    }
+
     // Enviar email de confirmación
     const orderData = {
       id: orderId,
@@ -161,25 +187,6 @@ app.post("/make-server-69259dc0/orders", async (c) => {
 
     if (!emailResult.success) {
       console.log(`Advertencia: No se pudo enviar el email: ${JSON.stringify(emailResult.error)}`);
-    }
-
-    // Enviar SMS de confirmación si hay teléfono
-    if (customerInfo.phone) {
-      console.log(`Enviando SMS a: ${customerInfo.phone}`);
-      const smsResult = await sendOrderConfirmationSMS(
-        customerInfo.phone,
-        orderId,
-        customerInfo.name,
-        total
-      );
-
-      if (!smsResult.success) {
-        console.log(`Advertencia: No se pudo enviar el SMS: ${JSON.stringify(smsResult.error)}`);
-      } else {
-        console.log(`SMS enviado exitosamente con SID: ${smsResult.messageSid}`);
-      }
-    } else {
-      console.log(`No hay número de teléfono. SMS no enviado.`);
     }
 
     return c.json({ success: true, orderId });
@@ -278,6 +285,36 @@ app.get("/make-server-69259dc0/users/:userId", async (c) => {
   } catch (error) {
     console.log(`Error al obtener perfil: ${error}`);
     return c.json({ error: `Error al obtener perfil: ${error}` }, 500);
+  }
+});
+
+// Endpoint administrativo: reemplazar todos los productos (requiere header x-admin-key igual a ADMIN_KEY env)
+app.post("/make-server-69259dc0/admin/products/replace", async (c) => {
+  try {
+    const adminKey = c.req.header('x-admin-key') || '';
+    const expected = Deno.env.get('ADMIN_KEY') || '';
+    if (!adminKey || adminKey !== expected) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await c.req.json();
+    const { products } = body;
+    if (!Array.isArray(products)) {
+      return c.json({ error: 'products array required' }, 400);
+    }
+
+    // Borrar todos los productos existentes
+    const { error: delError } = await supabase.from('products').delete().neq('id', 0);
+    if (delError) throw delError;
+
+    // Insertar nuevos productos
+    const { error: insError } = await supabase.from('products').insert(products);
+    if (insError) throw insError;
+
+    return c.json({ success: true, inserted: products.length });
+  } catch (error) {
+    console.log(`Error admin replace products: ${error}`);
+    return c.json({ error: `Error admin replace products: ${error}` }, 500);
   }
 });
 
