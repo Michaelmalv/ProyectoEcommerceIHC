@@ -75,25 +75,58 @@ app.post("/make-server-69259dc0/auth/signup", async (c) => {
     const body = await c.req.json();
     const { email, password, fullName, phone } = body;
 
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const normalizedFullName = String(fullName || "").trim();
+    const normalizedPhone = phone ? normalizePhone(phone) : null;
+
+    if (!normalizedEmail || !password || !normalizedFullName) {
+      return c.json({ error: "Email, contraseña y nombre completo son obligatorios" }, 400);
+    }
+
+    const [{ data: existingEmail }, { data: existingPhone }] = await Promise.all([
+      supabase.from('customers').select('id').eq('email', normalizedEmail).maybeSingle(),
+      normalizedPhone
+        ? supabase.from('customers').select('id').eq('phone', normalizedPhone).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    if (existingEmail) {
+      return c.json({ error: "Ya existe una cuenta con ese correo electrónico" }, 409);
+    }
+
+    if (existingPhone) {
+      return c.json({ error: "Ya existe una cuenta con ese número de teléfono" }, 409);
+    }
+
     // Crear usuario en Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
+      email: normalizedEmail,
       password,
       email_confirm: true, // Auto-confirmar email
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      const message = String(authError.message || authError).toLowerCase();
+      if (message.includes('already') || message.includes('exists') || message.includes('registered')) {
+        return c.json({ error: "Ya existe una cuenta con ese correo electrónico" }, 409);
+      }
+      throw authError;
+    }
 
     // Crear perfil de cliente
     const { error: customerError } = await supabase
       .from('customers')
       .insert({
         id: authData.user.id,
-        full_name: fullName,
-        phone: phone || null,
+        email: normalizedEmail,
+        full_name: normalizedFullName,
+        phone: normalizedPhone,
       });
 
-    if (customerError) throw customerError;
+    if (customerError) {
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      throw customerError;
+    }
 
     return c.json({ success: true, user: authData.user });
   } catch (error) {
@@ -142,6 +175,50 @@ app.post("/make-server-69259dc0/orders", async (c) => {
 
     if (itemsError) throw itemsError;
 
+    // Descontar stock del inventario
+    console.log(`Iniciando descuento de stock para ${items.length} producto(s)`);
+    for (const item of items) {
+      const productId = Number(item.id);
+      const quantity = Number(item.quantity ?? 1);
+      
+      console.log(`Procesando producto ID ${productId}, cantidad: ${quantity}`);
+      
+      try {
+        // Obtener stock actual
+        const { data: product, error: fetchError } = await supabase
+          .from('products')
+          .select('id, stock')
+          .eq('id', productId)
+          .single();
+
+        if (fetchError) {
+          console.error(`Error al obtener producto ${productId}:`, fetchError);
+          throw new Error(`No se encontró producto ${productId}: ${fetchError.message}`);
+        }
+
+        const currentStock = Number(product?.stock ?? 0);
+        const newStock = Math.max(0, currentStock - quantity);
+
+        console.log(`Producto ${productId}: stock actual=${currentStock}, cantidad comprada=${quantity}, nuevo stock=${newStock}`);
+
+        // Actualizar stock
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({ stock: newStock })
+          .eq('id', productId);
+
+        if (updateError) {
+          console.error(`Error al actualizar stock del producto ${productId}:`, updateError);
+          throw new Error(`Fallo actualizar stock de ${productId}: ${updateError.message}`);
+        }
+        
+        console.log(`Stock actualizado exitosamente para producto ${productId}`);
+      } catch (error) {
+        console.error(`Error crítico descuento stock producto ${productId}:`, error);
+        throw error;
+      }
+    }
+
     // Enviar email de confirmación
     const orderData = {
       id: orderId,
@@ -182,7 +259,24 @@ app.post("/make-server-69259dc0/orders", async (c) => {
       console.log(`No hay número de teléfono. SMS no enviado.`);
     }
 
-    return c.json({ success: true, orderId });
+    // Obtener stocks actualizados para los productos del pedido (debug)
+    try {
+      const ids = items.map((it: any) => Number(it.id));
+      const { data: updatedProducts, error: fetchUpdatedError } = await supabase
+        .from('products')
+        .select('id, stock')
+        .in('id', ids);
+
+      if (fetchUpdatedError) {
+        console.error('No se pudo obtener stocks actualizados:', fetchUpdatedError);
+        return c.json({ success: true, orderId });
+      }
+
+      return c.json({ success: true, orderId, updatedProducts });
+    } catch (e) {
+      console.error('Error al recuperar stocks actualizados:', e);
+      return c.json({ success: true, orderId });
+    }
   } catch (error) {
     console.log(`Error al crear pedido: ${error}`);
     return c.json({ error: `Error al crear pedido: ${error}` }, 500);
@@ -236,6 +330,34 @@ app.get("/make-server-69259dc0/users/:userId/orders", async (c) => {
   }
 });
 
+// Endpoint de debug: actualizar stock de un producto manualmente
+app.post("/make-server-69259dc0/debug/update-product", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { id, stock } = body;
+    if (!id || stock == null) return c.json({ error: 'id y stock son obligatorios' }, 400);
+
+    const productId = Number(id);
+    const newStock = Number(stock);
+
+    const { error: updateError, data } = await supabase
+      .from('products')
+      .update({ stock: newStock })
+      .eq('id', productId)
+      .select();
+
+    if (updateError) {
+      console.error('Error debug update-product:', updateError);
+      return c.json({ error: String(updateError) }, 500);
+    }
+
+    return c.json({ success: true, updated: data });
+  } catch (err) {
+    console.error('Error en debug update-product:', err);
+    return c.json({ error: String(err) }, 500);
+  }
+});
+
 // Actualizar perfil de usuario
 app.put("/make-server-69259dc0/users/:userId", async (c) => {
   try {
@@ -281,4 +403,25 @@ app.get("/make-server-69259dc0/users/:userId", async (c) => {
   }
 });
 
+Deno.serve(app.fetch);
+
+function normalizePhone(phone: string) {
+  const cleaned = phone.trim().replace(/[\s\-()]/g, "");
+
+  if (!cleaned) {
+    return null;
+  }
+
+  if (cleaned.startsWith('+')) {
+    return cleaned;
+  }
+
+  if (cleaned.startsWith('0')) {
+    return `+593${cleaned.slice(1)}`;
+  }
+
+  return `+593${cleaned}`;
+}
+
+// Servir la app
 Deno.serve(app.fetch);

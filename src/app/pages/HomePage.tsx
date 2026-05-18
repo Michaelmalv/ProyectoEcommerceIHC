@@ -1,7 +1,16 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { ArrowRight, Shield, Truck, Clock } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "../components/ui/carousel";
 import { categories } from "../data/products";
 import { brandLogoUrl, categoryImageUrls, heroBannerUrl } from "../data/brandAssets";
 
@@ -22,6 +31,55 @@ import { brandLogoUrl, categoryImageUrls, heroBannerUrl } from "../data/brandAss
  */
 
 export function HomePage() {
+  const [heroCarouselApi, setHeroCarouselApi] = useState<CarouselApi>();
+  const [heroCurrentSlide, setHeroCurrentSlide] = useState(0);
+
+  const heroSlides = [
+    {
+      src: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/branding/outfit1.png",
+      alt: "Banner promocional de CrowStore",
+    },
+    {
+      src: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/branding/outfit2.png",
+      alt: "Colección destacada de camisetas",
+    },
+    {
+      src: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/branding/outfit3.png",
+      alt: "Colección destacada de pantalones",
+    },
+    {
+      src: "https://hggvambaspxwfekileaz.supabase.co/storage/v1/object/public/products/branding/outfit4.png",
+      alt: "Colección destacada de vestidos",
+    },
+  ];
+
+  useEffect(() => {
+    if (!heroCarouselApi) return;
+
+    const onSelect = () => {
+      setHeroCurrentSlide(heroCarouselApi.selectedScrollSnap());
+    };
+
+    onSelect();
+    heroCarouselApi.on("select", onSelect);
+    heroCarouselApi.on("reInit", onSelect);
+
+    return () => {
+      heroCarouselApi.off("select", onSelect);
+      heroCarouselApi.off("reInit", onSelect);
+    };
+  }, [heroCarouselApi]);
+
+  useEffect(() => {
+    if (!heroCarouselApi) return;
+
+    const interval = setInterval(() => {
+      heroCarouselApi.scrollNext();
+    }, 4500);
+
+    return () => clearInterval(interval);
+  }, [heroCarouselApi]);
+
   const features = [
     {
       icon: Truck,
@@ -54,7 +112,7 @@ export function HomePage() {
               Editorial fashion store
             </div>
             <h1 id="hero-heading" className="font-display text-4xl leading-[0.95] tracking-tight text-foreground md:text-6xl">
-              Viste una tienda con presencia de marca real.
+              Explora una tienda con presencia de marca real.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-8 text-muted-foreground">
               CrowStore combina un catálogo navegable, flujos claros y una estética más finalista para parecer un producto listo para revisión.
@@ -89,11 +147,42 @@ export function HomePage() {
               Nueva colección
             </div>
             <div className="overflow-hidden rounded-[2rem] border border-[color:var(--border)] bg-white shadow-[0_24px_70px_-36px_rgba(24,18,15,0.6)]">
-              <img
-                src={heroBannerUrl}
-                alt="Banner promocional de CrowStore"
-                className="h-[28rem] w-full object-cover"
-              />
+              <Carousel
+                setApi={setHeroCarouselApi}
+                opts={{ loop: true }}
+                className="w-full"
+                aria-label="Carrusel de imágenes destacadas"
+              >
+                <CarouselContent className="-ml-0">
+                  {heroSlides.map((slide) => (
+                    <CarouselItem key={slide.alt} className="pl-0">
+                      <img
+                        src={slide.src}
+                        alt={slide.alt}
+                        className="h-[28rem] w-full object-cover"
+                      />
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="left-3 border-[color:var(--border)] bg-white/90" />
+                <CarouselNext className="right-3 border-[color:var(--border)] bg-white/90" />
+              </Carousel>
+            </div>
+            <div className="mt-4 flex justify-center gap-2" aria-label="Indicadores del carrusel">
+              {heroSlides.map((slide, index) => (
+                <button
+                  key={slide.alt}
+                  type="button"
+                  onClick={() => heroCarouselApi?.scrollTo(index)}
+                  className={`h-2.5 w-2.5 rounded-full transition-all ${
+                    heroCurrentSlide === index
+                      ? "bg-foreground"
+                      : "bg-[color:var(--border)] hover:bg-muted-foreground"
+                  }`}
+                  aria-label={`Ir a la imagen ${index + 1}`}
+                  aria-current={heroCurrentSlide === index}
+                />
+              ))}
             </div>
             <div className="absolute -bottom-6 left-6 right-6 rounded-[1.5rem] border border-[color:var(--border)] bg-white/92 p-4 shadow-xl backdrop-blur-md">
               <div className="flex items-center justify-between gap-4">

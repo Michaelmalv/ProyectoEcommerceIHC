@@ -36,6 +36,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 export function HelpPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategoryCard, setActiveCategoryCard] = useState<string | null>(null);
+  const [selectedClothingType, setSelectedClothingType] = useState<string | null>(null);
 
   const categories = [
     {
@@ -237,12 +238,170 @@ export function HelpPage() {
         </p>
       )}
 
-      {/* Guía de tallas: accesible desde páginas de producto */}
-      <Card className="p-6 border-2 mb-8">
-        <h2 className="text-2xl font-bold mb-3">Guía de tallas</h2>
-        <p className="text-gray-700">
-          Las guías de tallas completas están disponibles en cada página de producto (pulsa "Guía de tallas").
-        </p>
+      {/* Guía de tallas interactiva */}
+      <Card id="guia-tallas" className="p-6 border-2 mb-8">
+        <h2 className="text-2xl font-bold mb-6">Guía de tallas</h2>
+        <div className="mb-6">
+          <p className="text-gray-600 mb-4">Selecciona el tipo de prenda para ver las medidas recomendadas:</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: "camisetas", label: "Camisetas" },
+              { id: "pantalones", label: "Pantalones" },
+              { id: "vestidos", label: "Vestidos" },
+              { id: "otras", label: "Otras prendas" },
+            ].map((clothing) => (
+              <Button
+                key={clothing.id}
+                onClick={() => setSelectedClothingType(selectedClothingType === clothing.id ? null : clothing.id)}
+                variant={selectedClothingType === clothing.id ? "default" : "outline"}
+                className={selectedClothingType === clothing.id ? "bg-black text-white hover:bg-gray-800" : ""}
+                aria-pressed={selectedClothingType === clothing.id}
+              >
+                {clothing.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+        
+        {/* Tabla de Camisetas */}
+        {selectedClothingType === "camisetas" && (
+          <div className="overflow-x-auto">
+            <table className="w-full border-2 border-gray-300 text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Talla</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Pecho (cm)</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Largo (cm)</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Hombros (cm)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["XS", "84-88", "60-62", "38-40"],
+                  ["S", "89-94", "63-65", "41-42"],
+                  ["M", "95-100", "66-68", "43-44"],
+                  ["L", "101-106", "69-71", "45-46"],
+                  ["XL", "107-113", "72-74", "47-48"],
+                  ["XXL", "114-120", "75-77", "49-50"],
+                ].map((row) => (
+                  <tr key={row[0]} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
+                    <td className="border-b border-gray-200 px-3 py-2 font-bold">{row[0]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[1]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[2]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[3]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Tabla de Pantalones */}
+        {selectedClothingType === "pantalones" && (
+          <div className="overflow-x-auto">
+            <table className="w-full border-2 border-gray-300 text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Talla</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Cintura (cm)</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Cadera (cm)</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Tiro (cm)</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Largo (cm)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["XS", "64-68", "88-92", "24-25", "98-100"],
+                  ["S", "69-73", "93-97", "25-26", "100-102"],
+                  ["M", "74-78", "98-102", "26-27", "102-104"],
+                  ["L", "79-85", "103-109", "27-28", "104-106"],
+                  ["XL", "86-92", "110-116", "28-29", "106-108"],
+                  ["XXL", "93-100", "117-124", "29-30", "108-110"],
+                ].map((row) => (
+                  <tr key={row[0]} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
+                    <td className="border-b border-gray-200 px-3 py-2 font-bold">{row[0]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[1]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[2]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[3]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[4]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Tabla de Vestidos */}
+        {selectedClothingType === "vestidos" && (
+          <div className="overflow-x-auto">
+            <table className="w-full border-2 border-gray-300 text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Talla</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Pecho (cm)</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Cintura (cm)</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Cadera (cm)</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Largo (cm)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["XS", "80-84", "62-66", "88-92", "82-84"],
+                  ["S", "85-89", "67-71", "93-97", "84-86"],
+                  ["M", "90-94", "72-76", "98-102", "86-88"],
+                  ["L", "95-101", "77-83", "103-109", "88-90"],
+                  ["XL", "102-108", "84-90", "110-116", "90-92"],
+                  ["XXL", "109-116", "91-98", "117-124", "92-94"],
+                ].map((row) => (
+                  <tr key={row[0]} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
+                    <td className="border-b border-gray-200 px-3 py-2 font-bold">{row[0]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[1]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[2]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[3]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[4]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Tabla de Otras Prendas */}
+        {selectedClothingType === "otras" && (
+          <div className="overflow-x-auto">
+            <table className="w-full border-2 border-gray-300 text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Talla</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Pecho (cm)</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Largo (cm)</th>
+                  <th className="border-b-2 border-gray-300 px-3 py-2 text-left font-bold">Manga (cm)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["S", "92-96", "66-68", "61-62"],
+                  ["M", "97-102", "68-70", "63-64"],
+                  ["L", "103-108", "70-72", "65-66"],
+                  ["XL", "109-114", "72-74", "67-68"],
+                ].map((row) => (
+                  <tr key={row[0]} className="odd:bg-white even:bg-gray-50 hover:bg-gray-100">
+                    <td className="border-b border-gray-200 px-3 py-2 font-bold">{row[0]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[1]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[2]}</td>
+                    <td className="border-b border-gray-200 px-3 py-2">{row[3]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {!selectedClothingType && (
+          <div className="text-center py-8 text-gray-500">
+            <p>Selecciona un tipo de prenda arriba para ver la tabla de tallas</p>
+          </div>
+        )}
       </Card>
 
       {/* Secciones principales de ayuda */}

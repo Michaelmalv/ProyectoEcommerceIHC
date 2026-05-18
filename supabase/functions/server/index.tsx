@@ -57,144 +57,215 @@ app.get("/make-server-69259dc0/products/:id", async (c) => {
       .from('products')
       .select('*')
       .eq('id', id)
+
+        const normalizedEmail = String(email || "").trim().toLowerCase();
+        const normalizedFullName = String(fullName || "").trim();
+        const normalizedPhone = phone ? normalizePhone(phone) : null;
+
+        if (!normalizedEmail || !password || !normalizedFullName) {
+          return c.json({ error: "Email, contraseña y nombre completo son obligatorios" }, 400);
+        }
+
+        const [{ data: existingEmail }, { data: existingPhone }] = await Promise.all([
+          supabase.from('customers').select('id').eq('email', normalizedEmail).maybeSingle(),
+          normalizedPhone
+            ? supabase.from('customers').select('id').eq('phone', normalizedPhone).maybeSingle()
+            : Promise.resolve({ data: null }),
+        ]);
+
+        if (existingEmail) {
+          return c.json({ error: "Ya existe una cuenta con ese correo electrónico" }, 409);
+        }
+
+        if (existingPhone) {
+          return c.json({ error: "Ya existe una cuenta con ese número de teléfono" }, 409);
+        }
       .single();
 
     if (error) throw error;
-
+          email: normalizedEmail,
     return c.json(data);
   } catch (error) {
     console.log(`Error al obtener producto: ${error}`);
     return c.json({ error: `Error al obtener producto: ${error}` }, 500);
-  }
+        if (authError) {
+          const message = String(authError.message || authError).toLowerCase();
+          if (message.includes('already') || message.includes('exists') || message.includes('registered')) {
+            return c.json({ error: "Ya existe una cuenta con ese correo electrónico" }, 409);
+          }
+          throw authError;
+        }
 });
 
 // Registro de usuario
 app.post("/make-server-69259dc0/auth/signup", async (c) => {
   try {
     const body = await c.req.json();
-    const { email, password, fullName, phone } = body;
+            email: normalizedEmail,
+            full_name: normalizedFullName,
+            phone: normalizedPhone,
+          });
 
-    // Crear usuario en Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Auto-confirmar email
+        if (customerError) {
+          await supabase.auth.admin.deleteUser(authData.user.id);
+          throw customerError;
+        }
+
+        return c.json({ success: true, user: authData.user });
+      } catch (error) {
+        console.log(`Error en registro: ${error}`);
+        return c.json({ error: `Error en registro: ${error}` }, 500);
+      }
     });
 
-    if (authError) throw authError;
+    function normalizePhone(phone: string) {
+      const cleaned = phone.trim().replace(/[\s\-()]/g, "");
 
-    // Crear perfil de cliente
-    const { error: customerError } = await supabase
-      .from('customers')
-      .insert({
-        id: authData.user.id,
-        full_name: fullName,
-        phone: phone || null,
-      });
-
-    if (customerError) throw customerError;
-
-    return c.json({ success: true, user: authData.user });
-  } catch (error) {
-    console.log(`Error en registro: ${error}`);
-    return c.json({ error: `Error en registro: ${error}` }, 500);
-  }
-});
-
-// Crear un pedido
-app.post("/make-server-69259dc0/orders", async (c) => {
-  try {
-    const body = await c.req.json();
-    const { items, total, customerInfo, userId } = body;
-
-    const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-
-    // Insertar pedido
-    const { error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        id: orderId,
-        customer_id: userId || null,
-        customer_name: customerInfo.name,
-        customer_email: customerInfo.email,
-        customer_address: customerInfo.address,
-        customer_phone: customerInfo.phone || null,
-        total: total,
-        status: 'procesando',
-      });
-
-    if (orderError) throw orderError;
-
-    // Insertar items del pedido
-    const orderItems = items.map((item: any) => ({
-      order_id: orderId,
-      product_id: item.id,
-      product_name: item.name,
-      product_price: item.price,
-      quantity: item.quantity,
-      selected_size: item.selectedSize,
-    }));
-
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) throw itemsError;
-
-    // Decrementar stock para cada producto del pedido
-    for (const itm of items) {
-      try {
-        const { data: prod, error: prodError } = await supabase
-          .from('products')
-          .select('stock')
-          .eq('id', itm.id)
-          .single();
-
-        if (prodError) throw prodError;
-
-        const currentStock = prod?.stock ?? 0;
-        const newStock = Math.max(0, currentStock - itm.quantity);
-
-        const { error: updError } = await supabase
-          .from('products')
-          .update({ stock: newStock })
-          .eq('id', itm.id);
-
-        if (updError) throw updError;
-      } catch (e) {
-        console.log(`Advertencia: no se pudo actualizar stock para producto ${itm.id}: ${e}`);
-        // No abortamos la creación del pedido por un error al decrementar stock,
-        // pero registramos la advertencia para revisión.
+      if (!cleaned) {
+        return null;
       }
+
+      if (cleaned.startsWith('+')) {
+        return cleaned;
+      }
+
+      if (cleaned.startsWith('0')) {
+        return `+593${cleaned.slice(1)}`;
+      }
+
+      return `+593${cleaned}`;
     }
 
-    // Enviar email de confirmación
-    const orderData = {
-      id: orderId,
-      customer_name: customerInfo.name,
-      customer_email: customerInfo.email,
-      customer_address: customerInfo.address,
-      total: total,
-      created_at: new Date().toISOString(),
-    };
+    // Crear un pedido
+    app.post("/make-server-69259dc0/orders", async (c) => {
+      try {
+        const body = await c.req.json();
+        const { items, total, customerInfo, userId } = body;
 
-    console.log(`Enviando email a: ${customerInfo.email}`);
-    const emailResult = await sendOrderConfirmationEmail(
-      customerInfo.email,
-      orderData,
-      orderItems
-    );
+        const orderId = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-    if (!emailResult.success) {
-      console.log(`Advertencia: No se pudo enviar el email: ${JSON.stringify(emailResult.error)}`);
-    }
+        // Insertar pedido
+        const { error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            id: orderId,
+            customer_id: userId || null,
+            customer_name: customerInfo.name,
+            customer_email: customerInfo.email,
+            customer_address: customerInfo.address,
+            customer_phone: customerInfo.phone || null,
+            total: total,
+            status: 'procesando',
+          });
 
-    return c.json({ success: true, orderId });
-  } catch (error) {
-    console.log(`Error al crear pedido: ${error}`);
-    return c.json({ error: `Error al crear pedido: ${error}` }, 500);
-  }
-});
+        if (orderError) throw orderError;
+
+        // Insertar items del pedido
+        const orderItems = items.map((item: any) => ({
+          order_id: orderId,
+          product_id: item.id,
+          product_name: item.name,
+          product_price: item.price,
+          quantity: item.quantity,
+          selected_size: item.selectedSize,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
+
+        if (itemsError) throw itemsError;
+
+        // Descontar stock del inventario
+        console.log(`Iniciando descuento de stock para ${items.length} producto(s)`);
+        for (const item of items) {
+          const productId = Number(item.id);
+          const quantity = Number(item.quantity ?? 1);
+          
+          console.log(`Procesando producto ID ${productId}, cantidad: ${quantity}`);
+          
+          try {
+            // Obtener stock actual
+            const { data: product, error: fetchError } = await supabase
+              .from('products')
+              .select('id, stock')
+              .eq('id', productId)
+              .single();
+
+            if (fetchError) {
+              console.error(`Error al obtener producto ${productId}:`, fetchError);
+              throw new Error(`No se encontró producto ${productId}: ${fetchError.message}`);
+            }
+
+            const currentStock = Number(product?.stock ?? 0);
+            const newStock = Math.max(0, currentStock - quantity);
+
+            console.log(`Producto ${productId}: stock actual=${currentStock}, cantidad comprada=${quantity}, nuevo stock=${newStock}`);
+
+            // Actualizar stock
+            const { error: updateError } = await supabase
+              .from('products')
+              .update({ stock: newStock })
+              .eq('id', productId);
+
+            if (updateError) {
+              console.error(`Error al actualizar stock del producto ${productId}:`, updateError);
+              throw new Error(`Fallo actualizar stock de ${productId}: ${updateError.message}`);
+            }
+            
+            console.log(`Stock actualizado exitosamente para producto ${productId}`);
+          } catch (error) {
+            console.error(`Error crítico descuento stock producto ${productId}:`, error);
+            throw error;
+          }
+        }
+
+        // Enviar email de confirmación
+        const orderData = {
+          id: orderId,
+          customer_name: customerInfo.name,
+          customer_email: customerInfo.email,
+          customer_address: customerInfo.address,
+          total: total,
+          created_at: new Date().toISOString(),
+        };
+
+        console.log(`Enviando email a: ${customerInfo.email}`);
+        const emailResult = await sendOrderConfirmationEmail(
+          customerInfo.email,
+          orderData,
+          orderItems
+        );
+
+        if (!emailResult.success) {
+          console.log(`Advertencia: No se pudo enviar el email: ${JSON.stringify(emailResult.error)}`);
+        }
+
+        // Enviar SMS de confirmación si hay teléfono
+        if (customerInfo.phone) {
+          console.log(`Enviando SMS a: ${customerInfo.phone}`);
+          const smsResult = await sendOrderConfirmationSMS(
+            customerInfo.phone,
+            orderId,
+            customerInfo.name,
+            total
+          );
+
+          if (!smsResult.success) {
+            console.log(`Advertencia: No se pudo enviar el SMS: ${JSON.stringify(smsResult.error)}`);
+          } else {
+            console.log(`SMS enviado exitosamente con SID: ${smsResult.messageSid}`);
+          }
+        } else {
+          console.log(`No hay número de teléfono. SMS no enviado.`);
+        }
+
+        return c.json({ success: true, orderId });
+      } catch (error) {
+        console.log(`Error al crear pedido: ${error}`);
+        return c.json({ error: `Error al crear pedido: ${error}` }, 500);
+      }
+    });
 
 // Obtener un pedido por ID
 app.get("/make-server-69259dc0/orders/:id", async (c) => {

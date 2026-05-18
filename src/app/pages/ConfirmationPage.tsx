@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router";
-import { CheckCircle, Package, Truck, Home } from "lucide-react";
+import { CheckCircle, Package, Truck, Home, Copy, Check } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
@@ -22,6 +22,7 @@ export function ConfirmationPage() {
   const location = useLocation();
   const { orderId, email, name, total } = location.state || {};
   const [trackingStatus, setTrackingStatus] = useState("procesando");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // Simulación de cambio de estado
@@ -80,6 +81,18 @@ export function ConfirmationPage() {
 
   const status = getStatusInfo();
 
+  const handleCopyOrderId = async () => {
+    if (!orderId) return;
+
+    try {
+      await navigator.clipboard.writeText(orderId);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Success Header */}
@@ -97,7 +110,22 @@ export function ConfirmationPage() {
           </p>
           <div className="rounded-[1.5rem] border border-green-200 bg-white px-6 py-4 shadow-sm">
             <p className="text-sm text-muted-foreground">Número de pedido</p>
-            <p className="font-display text-3xl tracking-tight">{orderId}</p>
+            <div className="mt-1 flex items-center justify-center gap-2">
+              <p className="font-display text-3xl tracking-tight">{orderId}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleCopyOrderId}
+                className="h-8 w-8 rounded-full border-green-200 bg-white text-green-700 hover:bg-green-50 hover:text-green-800"
+                aria-label={copied ? "Número de pedido copiado" : "Copiar número de pedido"}
+              >
+                {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+              </Button>
+            </div>
+            {copied && (
+              <p className="mt-2 text-xs font-semibold text-green-700">Copiado al portapapeles</p>
+            )}
           </div>
         </div>
       </Card>
