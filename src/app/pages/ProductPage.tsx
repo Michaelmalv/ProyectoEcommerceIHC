@@ -17,6 +17,8 @@ import { Alert, AlertDescription } from "../components/ui/alert";
 import { products, sizes } from "../data/products";
 import SizeGuideModal from "../components/SizeGuideModal";
 import { useCart } from "../context/CartContext";
+import { getProductById } from "../../utils/api";
+import { getPublicUrlFromPath } from "../../utils/storage";
 
 /**
  * ANÁLISIS HEURÍSTICO:
@@ -38,10 +40,54 @@ export function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [addedToCart, setAddedToCart] = useState(false);
   const [openGuide, setOpenGuide] = useState(false);
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
-  const product = products.find((p) => p.id === parseInt(id || "0"));
-  const galleryImages = product?.images?.length ? product.images : product ? [product.image] : [];
+  const localProduct = products.find((item) => item.id === parseInt(id || "0"));
+
+  useEffect(() => {
+    const loadProduct = async () => {
+      const productId = parseInt(id || "0");
+
+      if (!productId) {
+        setProduct(null);
+        setLoadError("Producto no encontrado");
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setLoadError("");
+
+      try {
+        const data = await getProductById(productId);
+        setProduct({
+          ...localProduct,
+          ...data,
+          image: localProduct?.image || data?.image || "",
+          images: localProduct?.images?.length
+            ? localProduct.images
+            : data?.images?.length
+            ? data.images
+            : undefined,
+        });
+      } catch (error) {
+        console.error("Error al cargar producto:", error);
+        setProduct(localProduct || null);
+        setLoadError(localProduct ? "" : "No se pudo cargar el producto");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProduct();
+  }, [id]);
+
+  const galleryImages = product?.images?.length ? product.images : product?.image ? [product.image] : [];
   const [selectedImage, setSelectedImage] = useState(galleryImages[0] || "");
+  const resolvedMainImage = getPublicUrlFromPath(localProduct?.image || selectedImage || product?.image || "");
+  const resolvedGalleryImages = galleryImages.map((image) => getPublicUrlFromPath(image));
 
   useEffect(() => {
     if (galleryImages.length > 0) {
@@ -49,11 +95,28 @@ export function ProductPage() {
     }
   }, [product?.id]);
 
+  useEffect(() => {
+    if (product?.stock != null) {
+      setQuantity((currentQuantity) => Math.min(currentQuantity, Math.max(1, Number(product.stock) || 1)));
+    }
+  }, [product?.stock]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <Card className="p-12 text-center">
+          <h1 className="font-display text-3xl mb-4 tracking-tight">Cargando producto...</h1>
+        </Card>
+      </div>
+    );
+  }
+
   if (!product) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-6">
         <Card className="p-12 text-center">
           <h1 className="font-display text-3xl mb-4 tracking-tight">Producto no encontrado</h1>
+          {loadError && <p className="mb-4 text-sm text-muted-foreground">{loadError}</p>}
           <Link to="/catalogo">
             <Button>
               Volver al catálogo
@@ -78,6 +141,7 @@ export function ProductPage() {
 
   const isLowStock = product.stock < 5;
   const availableSize = product.size;
+  const maxQuantity = Math.max(1, Number(product.stock) || 1);
   const sizeGuideAnchor =
     product.category === "pantalones"
       ? "/ayuda#guia-pantalones"
@@ -146,7 +210,7 @@ export function ProductPage() {
           <div className="relative rounded-[2rem] border border-[color:var(--border)] bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(239,225,208,0.9))] shadow-[0_28px_70px_-40px_rgba(24,18,15,0.6)] flex items-center justify-center p-6">
             <div className="w-full h-full flex items-center justify-center p-4 bg-[rgba(255,255,255,0.6)] rounded-[1.5rem]">
                 <img
-                src={selectedImage}
+                src={resolvedMainImage}
                 alt={`${product.name} - ${product.color} para ${product.gender} - Vista principal`}
                 className="max-h-[40vh] md:max-h-[64vh] max-w-full w-auto object-contain"
               />
@@ -160,7 +224,7 @@ export function ProductPage() {
           </div>
             {galleryImages.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
-                {galleryImages.map((image, index) => (
+                {resolvedGalleryImages.map((image, index) => (
                   <button
                     key={`${image}-${index}`}
                     onClick={() => setSelectedImage(image)}
@@ -306,8 +370,8 @@ export function ProductPage() {
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                disabled={quantity >= product.stock}
+                onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
+                disabled={quantity >= maxQuantity}
                 aria-label="Aumentar cantidad"
               >
                 +

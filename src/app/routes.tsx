@@ -11,6 +11,9 @@ import { HelpPage } from "./pages/HelpPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { TrackOrderPage } from "./pages/TrackOrderPage";
+import { ChangePasswordPage } from "./pages/ChangePasswordPage";
+import { NotificationPreferencesPage } from "./pages/NotificationPreferencesPage";
+import { PrivacySettingsPage } from "./pages/PrivacySettingsPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 export const router = createBrowserRouter([
@@ -25,6 +28,9 @@ export const router = createBrowserRouter([
       { path: "checkout", Component: CheckoutPage },
       { path: "confirmacion", Component: ConfirmationPage },
       { path: "perfil", Component: ProfilePage },
+      { path: "perfil/cambiar-contrasena", Component: ChangePasswordPage },
+      { path: "perfil/notificaciones", Component: NotificationPreferencesPage },
+      { path: "perfil/privacidad", Component: PrivacySettingsPage },
       { path: "ayuda", Component: HelpPage },
       { path: "seguimiento", Component: TrackOrderPage },
       { path: "login", Component: LoginPage },

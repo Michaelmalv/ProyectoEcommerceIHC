@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router";
+import { updateOrderStatus } from "../../utils/api";
 import { CheckCircle, Package, Truck, Home, Copy, Check } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -26,12 +27,40 @@ export function ConfirmationPage() {
 
   useEffect(() => {
     // Simulación de cambio de estado
-    const timer1 = setTimeout(() => setTrackingStatus("confirmado"), 3000);
-    const timer2 = setTimeout(() => setTrackingStatus("preparando"), 6000);
+    const THREE_MIN = 3 * 60 * 1000; // 3 minutos
+
+    const timer1 = setTimeout(async () => {
+      setTrackingStatus("confirmado");
+      try {
+        if (orderId) await updateOrderStatus(orderId, "confirmado");
+      } catch (e) {
+        console.warn("No se pudo actualizar estado a 'confirmado' en servidor:", e);
+      }
+    }, THREE_MIN);
+
+    const timer2 = setTimeout(async () => {
+      setTrackingStatus("preparando");
+      try {
+        if (orderId) await updateOrderStatus(orderId, "preparando");
+      } catch (e) {
+        console.warn("No se pudo actualizar estado a 'preparando' en servidor:", e);
+      }
+    }, THREE_MIN * 2);
+
+    // Opcional: después de 3 pasos mover a 'enviado'
+    const timer3 = setTimeout(async () => {
+      setTrackingStatus("enviado");
+      try {
+        if (orderId) await updateOrderStatus(orderId, "enviado");
+      } catch (e) {
+        console.warn("No se pudo actualizar estado a 'enviado' en servidor:", e);
+      }
+    }, THREE_MIN * 3);
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
+      clearTimeout(timer3);
     };
   }, []);
 

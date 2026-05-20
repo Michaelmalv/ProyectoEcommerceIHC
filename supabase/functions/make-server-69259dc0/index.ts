@@ -28,6 +28,48 @@ app.use(
   }),
 );
 
+// Función auxiliar para manejar errores de forma consistente
+function formatErrorMessage(error: any, defaultMessage: string = "Error procesando solicitud"): string {
+  // Intentar extraer el mensaje de varias formas
+  let errorStr = "";
+  
+  if (error instanceof Error) {
+    errorStr = error.message;
+  } else if (typeof error === 'object' && error !== null) {
+    errorStr = error.message || error.error || String(error);
+  } else {
+    errorStr = String(error || "");
+  }
+  
+  errorStr = errorStr.trim();
+  console.error(`[ERROR] ${errorStr}`);
+  
+  // Si ya es un mensaje de error personalizado en español, devolverlo
+  if (errorStr.includes("Ya existe") || 
+      errorStr.includes("número telefónico") || 
+      errorStr.includes("correo electrónico")) {
+    return errorStr;
+  }
+  
+  // Casos específicos basados en contenido del error
+  if (errorStr.toLowerCase().includes('unique') || errorStr.toLowerCase().includes('duplicate')) {
+    return "Este dato ya existe en el sistema";
+  }
+  if (errorStr.toLowerCase().includes('not found')) {
+    return "Registro no encontrado";
+  }
+  if (errorStr.toLowerCase().includes('invalid')) {
+    return "Datos inválidos. Por favor verifica el formulario";
+  }
+  
+  // Si el error es vacío o [object Object], retornar mensaje genérico
+  if (!errorStr || errorStr === '[object Object]') {
+    return defaultMessage;
+  }
+  
+  return errorStr;
+}
+
 // Health check endpoint
 app.get("/make-server-69259dc0/health", (c) => {
   return c.json({ status: "ok" });
@@ -45,8 +87,7 @@ app.get("/make-server-69259dc0/products", async (c) => {
 
     return c.json(data);
   } catch (error) {
-    console.log(`Error al obtener productos: ${error}`);
-    return c.json({ error: `Error al obtener productos: ${error}` }, 500);
+    return c.json({ error: formatErrorMessage(error, "Error al obtener productos") }, 500);
   }
 });
 
@@ -64,8 +105,7 @@ app.get("/make-server-69259dc0/products/:id", async (c) => {
 
     return c.json(data);
   } catch (error) {
-    console.log(`Error al obtener producto: ${error}`);
-    return c.json({ error: `Error al obtener producto: ${error}` }, 500);
+    return c.json({ error: formatErrorMessage(error, "Error al obtener producto") }, 500);
   }
 });
 
@@ -79,26 +119,56 @@ app.post("/make-server-69259dc0/auth/signup", async (c) => {
     const normalizedFullName = String(fullName || "").trim();
     const normalizedPhone = phone ? normalizePhone(phone) : null;
 
+    console.log(`[SIGNUP] Datos recibidos - Email: ${normalizedEmail}, Phone: ${normalizedPhone}`);
+
     if (!normalizedEmail || !password || !normalizedFullName) {
       return c.json({ error: "Email, contraseña y nombre completo son obligatorios" }, 400);
     }
 
-    const [{ data: existingEmail }, { data: existingPhone }] = await Promise.all([
-      supabase.from('customers').select('id').eq('email', normalizedEmail).maybeSingle(),
-      normalizedPhone
-        ? supabase.from('customers').select('id').eq('phone', normalizedPhone).maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
+    // Validar email duplicado
+    console.log(`[SIGNUP] Buscando email existente: ${normalizedEmail}`);
+    const { data: existingEmail, error: emailError } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+    
+    if (emailError) {
+      console.error(`[SIGNUP] Error al buscar email:`, emailError);
+    }
 
     if (existingEmail) {
+      console.log(`[SIGNUP] Email ya existe: ${normalizedEmail}`);
       return c.json({ error: "Ya existe una cuenta con ese correo electrónico" }, 409);
     }
 
+    // Validar teléfono duplicado
+    let existingPhone = null;
+    let phoneError = null;
+    if (normalizedPhone) {
+      console.log(`[SIGNUP] Buscando teléfono existente: ${normalizedPhone}`);
+      const result = await supabase
+        .from('customers')
+        .select('id')
+        .eq('phone', normalizedPhone)
+        .maybeSingle();
+      
+      existingPhone = result.data;
+      phoneError = result.error;
+      
+      if (phoneError) {
+        console.error(`[SIGNUP] Error al buscar teléfono:`, phoneError);
+      }
+    }
+
     if (existingPhone) {
-      return c.json({ error: "Ya existe una cuenta con ese número de teléfono" }, 409);
+      console.log(`[SIGNUP] Teléfono ya existe: ${normalizedPhone}`);
+      console.log(`[SIGNUP] Teléfono duplicado detectado: ${normalizedPhone}`);
+      return c.json({ error: "Este número telefónico ya está registrado en otra cuenta" }, 409);
     }
 
     // Crear usuario en Supabase Auth
+    console.log(`[SIGNUP] Creando usuario en Auth...`);
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: normalizedEmail,
       password,
@@ -106,6 +176,7 @@ app.post("/make-server-69259dc0/auth/signup", async (c) => {
     });
 
     if (authError) {
+      console.error(`[SIGNUP] Error en Auth:`, authError);
       const message = String(authError.message || authError).toLowerCase();
       if (message.includes('already') || message.includes('exists') || message.includes('registered')) {
         return c.json({ error: "Ya existe una cuenta con ese correo electrónico" }, 409);
@@ -114,6 +185,7 @@ app.post("/make-server-69259dc0/auth/signup", async (c) => {
     }
 
     // Crear perfil de cliente
+    console.log(`[SIGNUP] Creando perfil de cliente para ID: ${authData.user.id}`);
     const { error: customerError } = await supabase
       .from('customers')
       .insert({
@@ -124,14 +196,16 @@ app.post("/make-server-69259dc0/auth/signup", async (c) => {
       });
 
     if (customerError) {
+      console.error(`[SIGNUP] Error al crear perfil:`, customerError);
       await supabase.auth.admin.deleteUser(authData.user.id);
       throw customerError;
     }
 
+    console.log(`[SIGNUP] Usuario registrado exitosamente: ${normalizedEmail}`);
     return c.json({ success: true, user: authData.user });
   } catch (error) {
-    console.log(`Error en registro: ${error}`);
-    return c.json({ error: `Error en registro: ${error}` }, 500);
+    console.error(`[SIGNUP] Error general:`, error);
+    return c.json({ error: formatErrorMessage(error, "Error al registrar usuario. Por favor, intenta de nuevo.") }, 500);
   }
 });
 
@@ -269,17 +343,21 @@ app.post("/make-server-69259dc0/orders", async (c) => {
 
       if (fetchUpdatedError) {
         console.error('No se pudo obtener stocks actualizados:', fetchUpdatedError);
-        return c.json({ success: true, orderId });
+        // Intentar devolver created_at del pedido consultando la tabla
+        const { data: orderRow } = await supabase.from('orders').select('created_at').eq('id', orderId).maybeSingle();
+        return c.json({ success: true, orderId, created_at: orderRow?.created_at || new Date().toISOString() });
       }
 
-      return c.json({ success: true, orderId, updatedProducts });
+      // Obtener created_at del pedido para que cliente calcule seguimiento
+      const { data: orderRow } = await supabase.from('orders').select('created_at').eq('id', orderId).maybeSingle();
+
+      return c.json({ success: true, orderId, updatedProducts, created_at: orderRow?.created_at });
     } catch (e) {
       console.error('Error al recuperar stocks actualizados:', e);
       return c.json({ success: true, orderId });
     }
   } catch (error) {
-    console.log(`Error al crear pedido: ${error}`);
-    return c.json({ error: `Error al crear pedido: ${error}` }, 500);
+    return c.json({ error: formatErrorMessage(error, "Error al crear pedido. Por favor, intenta de nuevo.") }, 500);
   }
 });
 
@@ -305,8 +383,37 @@ app.get("/make-server-69259dc0/orders/:id", async (c) => {
 
     return c.json({ ...order, items });
   } catch (error) {
-    console.log(`Error al obtener pedido: ${error}`);
-    return c.json({ error: `Error al obtener pedido: ${error}` }, 500);
+    return c.json({ error: formatErrorMessage(error, "Error al obtener pedido") }, 500);
+  }
+});
+
+// Actualizar estado de un pedido
+app.put("/make-server-69259dc0/orders/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const body = await c.req.json();
+    const { status } = body;
+
+    if (!status) {
+      return c.json({ error: 'Estado es requerido' }, 400);
+    }
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    const { data: order } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    return c.json(order);
+  } catch (error) {
+    return c.json({ error: formatErrorMessage(error, "Error al actualizar pedido") }, 500);
   }
 });
 
@@ -325,8 +432,7 @@ app.get("/make-server-69259dc0/users/:userId/orders", async (c) => {
 
     return c.json(data);
   } catch (error) {
-    console.log(`Error al obtener pedidos del usuario: ${error}`);
-    return c.json({ error: `Error al obtener pedidos: ${error}` }, 500);
+    return c.json({ error: formatErrorMessage(error, "Error al obtener pedidos") }, 500);
   }
 });
 
@@ -378,8 +484,7 @@ app.put("/make-server-69259dc0/users/:userId", async (c) => {
 
     return c.json({ success: true });
   } catch (error) {
-    console.log(`Error al actualizar perfil: ${error}`);
-    return c.json({ error: `Error al actualizar perfil: ${error}` }, 500);
+    return c.json({ error: formatErrorMessage(error, "Error al actualizar perfil de usuario") }, 500);
   }
 });
 
@@ -398,8 +503,7 @@ app.get("/make-server-69259dc0/users/:userId", async (c) => {
 
     return c.json(data);
   } catch (error) {
-    console.log(`Error al obtener perfil: ${error}`);
-    return c.json({ error: `Error al obtener perfil: ${error}` }, 500);
+    return c.json({ error: formatErrorMessage(error, "Error al obtener perfil de usuario") }, 500);
   }
 });
 

@@ -112,9 +112,21 @@ app.post("/make-server-69259dc0/auth/signup", async (c) => {
         }
 
         return c.json({ success: true, user: authData.user });
-      } catch (error) {
-        console.log(`Error en registro: ${error}`);
-        return c.json({ error: `Error en registro: ${error}` }, 500);
+      } catch (error: any) {
+        console.log('Error en registro:', error);
+        const msg = String(error?.message || error).toLowerCase();
+        const details = String(error?.details || '').toLowerCase();
+
+        if (
+          msg.includes('duplicate') ||
+          msg.includes('unique') ||
+          details.includes('key (phone)') ||
+          (msg.includes('phone') && msg.includes('exists'))
+        ) {
+          return c.json({ error: 'El teléfono ya está registrado' }, 409);
+        }
+
+        return c.json({ error: `Error en registro: ${String(error)}` }, 500);
       }
     });
 

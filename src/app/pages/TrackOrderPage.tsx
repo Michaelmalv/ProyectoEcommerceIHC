@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Package, CheckCircle, Truck, Clock } from "lucide-react";
 import { getOrderById } from "../../utils/api";
+import { useLocation } from "react-router";
+import { useRef } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -19,6 +21,8 @@ export function TrackOrderPage() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const location = useLocation();
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +39,62 @@ export function TrackOrderPage() {
       setLoading(false);
     }
   };
+
+  const fetchById = async (id: string, showLoading: boolean = true) => {
+    if (showLoading) {
+      setError("");
+      setOrder(null);
+      setLoading(true);
+    }
+    try {
+      const orderData = await getOrderById(id.trim());
+      setOrder(orderData);
+      return orderData;
+    } catch (err) {
+      setError("No se encontró el pedido. Verifica el número de pedido.");
+      return null;
+    } finally {
+      if (showLoading) {
+        setLoading(false);
+      }
+    }
+  };
+
+  // Función de polling que solo actualiza sin limpiar la UI
+  const pollOrderStatus = async (id: string) => {
+    try {
+      const orderData = await getOrderById(id.trim());
+      setOrder(orderData); // Actualiza silenciosamente
+    } catch (err) {
+      // silenciar errores de polling
+    }
+  };
+
+  useEffect(() => {
+    if ((location as any).state?.orderId) {
+      const id = (location as any).state.orderId as string;
+      setOrderId(id);
+      fetchById(id);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    const THREE_MIN = 3 * 60 * 1000; // 3 minutos
+    
+    if (orderId && !pollIntervalRef.current) {
+      // Poll cada 3 minutos para actualizar estado desde servidor
+      pollIntervalRef.current = setInterval(async () => {
+        await pollOrderStatus(orderId);
+      }, THREE_MIN);
+    }
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, [orderId]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

@@ -28,6 +28,14 @@ app.use(
   }),
 );
 
+function normalizePhone(phone: string) {
+  const cleaned = String(phone || "").trim().replace(/[\s\-()]/g, "");
+  if (!cleaned) return null;
+  if (cleaned.startsWith('+')) return cleaned;
+  if (cleaned.startsWith('0')) return `+593${cleaned.slice(1)}`;
+  return `+593${cleaned}`;
+}
+
 // Health check endpoint
 app.get("/make-server-69259dc0/health", (c) => {
   return c.json({ status: "ok" });
@@ -75,6 +83,22 @@ app.post("/make-server-69259dc0/auth/signup", async (c) => {
     const body = await c.req.json();
     const { email, password, fullName, phone } = body;
 
+    const normalizedPhone = phone ? normalizePhone(phone) : null;
+
+    // Verificar si el teléfono ya existe en la tabla customers
+    if (normalizedPhone) {
+      const { data: existingPhone, error: phoneQueryError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('phone', normalizedPhone)
+        .maybeSingle();
+
+      if (phoneQueryError) throw phoneQueryError;
+      if (existingPhone) {
+        return c.json({ error: 'Ya existe una cuenta con ese número de teléfono' }, 409);
+      }
+    }
+
     // Crear usuario en Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
@@ -82,23 +106,47 @@ app.post("/make-server-69259dc0/auth/signup", async (c) => {
       email_confirm: true, // Auto-confirmar email
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      const message = String(authError.message || authError).toLowerCase();
+      if (message.includes('already') || message.includes('exists') || message.includes('registered')) {
+        return c.json({ error: "Ya existe una cuenta con ese correo electrónico" }, 409);
+      }
+      throw authError;
+    }
 
-    // Crear perfil de cliente
+    // Crear perfil de cliente con teléfono normalizado
     const { error: customerError } = await supabase
       .from('customers')
       .insert({
         id: authData.user.id,
         full_name: fullName,
-        phone: phone || null,
+        phone: normalizedPhone || null,
       });
 
-    if (customerError) throw customerError;
+    if (customerError) {
+      // Si falla insertar customer, limpiar el usuario creado en Auth
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      throw customerError;
+    }
 
     return c.json({ success: true, user: authData.user });
-  } catch (error) {
-    console.log(`Error en registro: ${error}`);
-    return c.json({ error: `Error en registro: ${error}` }, 500);
+  } catch (error: any) {
+    console.log('Error en registro:', error);
+    const msg = String(error?.message || error).toLowerCase();
+    const details = String(error?.details || '').toLowerCase();
+
+    // Detectar violación de unicidad en teléfono u otros indicadores de duplicado
+    if (
+      msg.includes('duplicate') ||
+      msg.includes('unique') ||
+      details.includes('key (phone)') ||
+      (msg.includes('phone') && msg.includes('exists'))
+    ) {
+      return c.json({ error: 'El teléfono ya está registrado' }, 409);
+    }
+
+    // Fallback: convertir el error a string para evitar '[object Object]'
+    return c.json({ error: `Error en registro: ${String(error)}` }, 500);
   }
 });
 

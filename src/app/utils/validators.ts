@@ -68,11 +68,11 @@ export function validateCity(city: string): boolean {
 
 // ============= CÓDIGO POSTAL =============
 /**
- * Valida código postal español (5 dígitos)
+ * Valida código postal (ahora 6 dígitos)
  */
 export function validatePostalCode(postal: string): boolean {
   if (!postal) return false;
-  return /^\d{5}$/.test(postal);
+  return /^\d{6}$/.test(postal);
 }
 
 // ============= TARJETA DE CRÉDITO =============

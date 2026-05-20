@@ -166,7 +166,7 @@ export function ProfilePage() {
                       {order.order_items?.length || 0} producto(s)
                     </p>
                   </div>
-                  <div className="sm:text-right">
+                  <div className="sm:text-right flex flex-col items-end gap-3">
                     <p className="font-bold">${Number(order.total).toFixed(2)}</p>
                     <p
                       className={`text-sm capitalize ${
@@ -179,6 +179,11 @@ export function ProfilePage() {
                     >
                       {order.status}
                     </p>
+                    <div>
+                      <Link to="/seguimiento" state={{ orderId: order.id }}>
+                        <Button className="bg-black text-white">Rastrear pedido</Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -191,14 +196,11 @@ export function ProfilePage() {
           <Card className="p-6 border-2">
             <h2 className="text-xl font-bold mb-4">Configuración</h2>
             <div className="space-y-4">
-              <Button variant="outline" className="w-full border-2 justify-start text-left break-words whitespace-normal h-auto py-3">
-                <span className="block">Cambiar contraseña</span>
+              <Button asChild variant="outline" className="w-full border-2 justify-start text-left break-words whitespace-normal h-auto py-3">
+                <a href="/perfil/cambiar-contrasena" className="block">Cambiar contraseña</a>
               </Button>
-              <Button variant="outline" className="w-full border-2 justify-start text-left break-words whitespace-normal h-auto py-3">
-                <span className="block">Preferencias de notificaciones</span>
-              </Button>
-              <Button variant="outline" className="w-full border-2 justify-start text-left break-words whitespace-normal h-auto py-3">
-                <span className="block">Configuración de privacidad</span>
+              <Button asChild variant="outline" className="w-full border-2 justify-start text-left break-words whitespace-normal h-auto py-3">
+                <a href="/perfil/privacidad" className="block">Configuración de privacidad</a>
               </Button>
             </div>
           </Card>

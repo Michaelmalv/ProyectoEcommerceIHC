@@ -75,33 +75,75 @@ export async function signUp(data: {
   fullName: string;
   phone?: string;
 }) {
-  const response = await fetch(`${API_URL}/auth/signup`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${publicAnonKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
+  try {
+    const response = await fetch(`${API_URL}/auth/signup`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${publicAnonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Error al registrar usuario');
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      const errorMessage = responseData.error || 'Error al registrar usuario';
+      console.log('[SIGNUP] Error response:', errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    return responseData;
+  } catch (error: any) {
+    console.error('[SIGNUP] Error in signUp:', error);
+    // Si ya es un Error con mensaje, lanzarlo tal cual
+    if (error instanceof Error) {
+      throw error;
+    }
+    // Si es otro tipo de error, convertirlo a string
+    throw new Error(String(error) || 'Error al registrar usuario');
   }
-
-  return response.json();
 }
 
+export async function debugSignUp(data: {
+  email: string;
+  password: string;
+  fullName: string;
+  phone?: string;
+}) {
+  try {
+    console.log('[DEBUG] Iniciando registro con:', { email: data.email, phone: data.phone, name: data.fullName });
+    const result = await signUp(data);
+    console.log('[DEBUG] Registro exitoso:', result);
+    return result;
+  } catch (error: any) {
+    console.error('[DEBUG] Error capturado:', error);
+    console.error('[DEBUG] Error message:', error.message);
+    console.error('[DEBUG] Error toString:', String(error));
+    throw error;
+  }
+}
 // Login de usuario (usa Supabase Auth directamente)
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) throw error;
+    if (error) {
+      const msg = String(error.message || error).toLowerCase();
+      if (msg.includes('invalid') || msg.includes('password') || msg.includes('credentials')) {
+        throw new Error('Credenciales inválidas. Verifica email y contraseña');
+      }
+      throw new Error('Error al iniciar sesión');
+    }
 
-  return data;
+    return data;
+  } catch (err: any) {
+    if (err.message) throw err;
+    throw new Error('Error al iniciar sesión');
+  }
 }
 
 // Cerrar sesión
@@ -145,6 +187,24 @@ export async function getOrderById(id: string) {
 
   if (!response.ok) {
     throw new Error('Error al obtener pedido');
+  }
+
+  return response.json();
+}
+
+// Actualizar estado de un pedido (PUT /orders/:id)
+export async function updateOrderStatus(id: string, status: string) {
+  const response = await fetch(`${API_URL}/orders/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${publicAnonKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Error al actualizar estado del pedido');
   }
 
   return response.json();
@@ -200,4 +260,17 @@ export async function updateUserProfile(userId: string, data: {
   }
 
   return response.json();
+}
+
+// Cambiar contraseña del usuario autenticado
+export async function changePassword(newPassword: string) {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Error al cambiar contraseña');
+  }
+
+  return data;
 }

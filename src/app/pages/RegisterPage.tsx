@@ -8,7 +8,6 @@ import { useAuth } from "../context/AuthContext";
 import {
   validateEmail,
   validateFullName,
-  validatePhone,
   validatePassword,
   passwordsMatch,
 } from "../utils/validators";
@@ -29,7 +28,7 @@ export function RegisterPage() {
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
     const fullName = formData.get("fullName") as string;
-    const phone = formData.get("phone") as string;
+    // Ya no se recoge el teléfono desde el formulario
 
     // Validaciones frontend completas
     if (!fullName || !validateFullName(fullName)) {
@@ -44,13 +43,6 @@ export function RegisterPage() {
       return;
     }
 
-    if (phone && !validatePhone(phone)) {
-      setError(
-        "Teléfono inválido. Usa: 0999999999 o +593999999999 (solo números, 10 dígitos)"
-      );
-      setLoading(false);
-      return;
-    }
 
     if (!password || !validatePassword(password)) {
       setError("La contraseña debe tener al menos 6 caracteres");
@@ -65,10 +57,15 @@ export function RegisterPage() {
     }
 
     try {
-      await register({ email, password, fullName, phone });
+      await register({ email, password, fullName });
       navigate("/", { replace: true });
     } catch (err: any) {
-      setError(err.message || "Error al registrar usuario");
+      setError(JSON.stringify(err) || "Error al registrar usuario");
+      console.log('[RegisterPage] Error detail:', err);
+      console.log('[RegisterPage] Error message:', err?.message);
+      console.log('[RegisterPage] Error toString:', String(err));
+      const errorMsg = err?.message || String(err) || "Error al registrar usuario";
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -116,32 +113,7 @@ export function RegisterPage() {
             />
           </div>
 
-          <div>
-            <Label htmlFor="phone" className="font-bold">
-              Teléfono
-            </Label>
-            <Input
-              id="phone"
-              name="phone"
-              type="tel"
-              className="border-2 focus:ring-2 focus:ring-black"
-              placeholder="+593 999 999 999"
-              inputMode="numeric"
-              onKeyDown={(e) => {
-                // Permitir números, +, y teclas de control
-                if (!/[0-9+]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                  e.preventDefault();
-                }
-              }}
-              onChange={(e) => {
-                // Limitar a 13 caracteres (+593) o 10 caracteres (0)
-                const maxLength = e.target.value.startsWith('+') ? 13 : 10;
-                if (e.target.value.length > maxLength) {
-                  e.target.value = e.target.value.slice(0, maxLength);
-                }
-              }}
-            />
-          </div>
+          
 
           <div>
             <Label htmlFor="password" className="font-bold">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { CreditCard, Lock, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
@@ -16,7 +16,7 @@ import {
 } from "../components/ui/breadcrumb";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import { createOrder } from "../../utils/api";
+import { createOrder, getUserProfile } from "../../utils/api";
 import {
   validateEmail,
   validateFullName,
@@ -67,6 +67,77 @@ export function CheckoutPage() {
   const [expiryDate, setExpiryDate] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [cvv, setCvv] = useState("");
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [postal, setPostal] = useState("");
+
+  // Cargar datos del usuario autenticado para autocompletar o desde localStorage
+  useEffect(() => {
+    const loadData = async () => {
+      // Primero intentar cargar desde localStorage (datos persistentes)
+      const savedCheckout = localStorage.getItem('checkout-form');
+      if (savedCheckout) {
+        try {
+          const data = JSON.parse(savedCheckout);
+          setEmail(data.email || "");
+          setName(data.name || "");
+          setPhone(data.phone || "");
+          setAddress(data.address || "");
+          setCity(data.city || "");
+          setPostal(data.postal || "");
+          setCardNumber(data.cardNumber || "");
+          setExpiryDate(data.expiryDate || "");
+          setCvv(data.cvv || "");
+          return; // Ya cargó desde localStorage, no cargar desde API
+        } catch (err) {
+          console.error('Error parsing localStorage checkout data:', err);
+        }
+      }
+      
+      // Si no hay datos en localStorage, cargar del perfil del usuario
+      if (user?.id) {
+        try {
+          const profile = await getUserProfile(user.id);
+          if (profile) {
+            setEmail(user.email || "");
+            setName(profile.name || "");
+            setPhone(profile.phone || "");
+            setAddress(profile.address || "");
+            setCity(profile.city || "");
+            setPostal(profile.postal || "");
+          }
+        } catch (err) {
+          // Usuario logueado pero sin perfil lleno, usar lo que tenemos
+          setEmail(user.email || "");
+        }
+      }
+    };
+    loadData();
+  }, [user]);
+
+  // Guardar datos en localStorage cuando cambien
+  useEffect(() => {
+    const checkoutData = {
+      email,
+      name,
+      phone,
+      address,
+      city,
+      postal,
+      cardNumber,
+      expiryDate,
+      cvv
+    };
+    localStorage.setItem('checkout-form', JSON.stringify(checkoutData));
+  }, [email, name, phone, address, city, postal, cardNumber, expiryDate, cvv]);
+
+  // Limpiar localStorage después de procesar un pedido exitosamente
+  const clearCheckoutForm = () => {
+    localStorage.removeItem('checkout-form');
+  };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCardNumber(e.target.value);
@@ -85,7 +156,6 @@ export function CheckoutPage() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
     const newErrors: Record<string, string> = {};
 
     // Validar carrito no vacío
@@ -94,45 +164,45 @@ export function CheckoutPage() {
     }
 
     // Email
-    const email = (formData.get("email") as string)?.trim();
-    if (!email || !validateEmail(email)) {
+    const emailTrim = email.trim();
+    if (!emailTrim || !validateEmail(emailTrim)) {
       newErrors.email = "Email inválido (ej: usuario@ejemplo.com)";
     }
 
     // Nombre completo
-    const name = (formData.get("name") as string)?.trim();
-    if (!name || !validateFullName(name)) {
+    const nameTrim = name.trim();
+    if (!nameTrim || !validateFullName(nameTrim)) {
       newErrors.name = "Nombre debe tener 2-100 caracteres (solo letras y espacios)";
     }
 
     // Teléfono (opcional)
-    const phone = (formData.get("phone") as string)?.trim();
-    if (phone && !validatePhone(phone)) {
+    const phoneTrim = phone.trim();
+    if (phoneTrim && !validatePhone(phoneTrim)) {
       newErrors.phone = "Teléfono debe ser: 0999999999 o +593999999999 (solo números, 10 dígitos)";
     }
 
     // Dirección
-    const address = (formData.get("address") as string)?.trim();
-    if (!address || !validateAddress(address)) {
+    const addressTrim = address.trim();
+    if (!addressTrim || !validateAddress(addressTrim)) {
       newErrors.address = "Dirección debe tener 5-200 caracteres";
     }
 
     // Ciudad
-    const city = (formData.get("city") as string)?.trim();
-    if (!city || !validateCity(city)) {
+    const cityTrim = city.trim();
+    if (!cityTrim || !validateCity(cityTrim)) {
       newErrors.city = "Ciudad debe tener 2-50 caracteres (solo letras)";
     }
 
     // Código postal
-    const postal = (formData.get("postal") as string)?.trim();
-    if (!postal || !validatePostalCode(postal)) {
-      newErrors.postal = "Código postal debe ser 5 dígitos (ej: 28001)";
+    const postalTrim = postal.trim();
+    if (!postalTrim || !validatePostalCode(postalTrim)) {
+      newErrors.postal = "Código postal debe ser 6 dígitos (ej: 280011)";
     }
 
     // Tarjeta de crédito - validar con Luhn
     const cardNumberClean = cardNumber.replace(/\s/g, "");
     if (!cardNumberClean || !validateLuhn(cardNumberClean)) {
-      newErrors.cardNumber = "Número de tarjeta inválido (falla validación Luhn)";
+      newErrors.cardNumber = "Número de tarjeta inválido";
     }
 
     // Fecha de expiración
@@ -160,10 +230,10 @@ export function CheckoutPage() {
       items: cartItems,
       total: orderTotal,
       customerInfo: {
-        name: name,
-        email: email,
-        address: address,
-        phone: phone || "",
+        name: nameTrim,
+        email: emailTrim,
+        address: addressTrim,
+        phone: phoneTrim || "",
       },
       userId: user?.id, // Incluir el ID del usuario si está autenticado
     };
@@ -171,11 +241,12 @@ export function CheckoutPage() {
     createOrder(orderData)
       .then((response) => {
         clearCart();
+        clearCheckoutForm(); // Limpiar datos del formulario de localStorage
         navigate("/confirmacion", {
           state: {
             orderId: response.orderId,
-            email: formData.get("email"),
-            name: formData.get("name"),
+            email: emailTrim,
+            name: nameTrim,
             total: orderTotal
           }
         });
@@ -249,6 +320,8 @@ export function CheckoutPage() {
                     name="email"
                     type="email"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     aria-required="true"
                     aria-invalid={errors.email ? "true" : "false"}
                     aria-describedby={errors.email ? "email-error" : undefined}
@@ -271,6 +344,8 @@ export function CheckoutPage() {
                     name="name"
                     type="text"
                     required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     aria-required="true"
                     aria-invalid={errors.name ? "true" : "false"}
                     aria-describedby={errors.name ? "name-error" : "name-help"}
@@ -302,6 +377,14 @@ export function CheckoutPage() {
                     id="phone"
                     name="phone"
                     type="tel"
+                    value={phone}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const maxLength = val.startsWith('+') ? 13 : 10;
+                      if (val.length <= maxLength) {
+                        setPhone(val);
+                      }
+                    }}
                     aria-invalid={errors.phone ? "true" : "false"}
                     aria-describedby={errors.phone ? "phone-error" : "phone-help"}
                     className="focus:ring-2 focus:ring-black"
@@ -310,12 +393,6 @@ export function CheckoutPage() {
                     onKeyDown={(e) => {
                       if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                         e.preventDefault();
-                      }
-                    }}
-                    onChange={(e) => {
-                      const maxLength = e.target.value.startsWith('+') ? 13 : 10;
-                      if (e.target.value.length > maxLength) {
-                        e.target.value = e.target.value.slice(0, maxLength);
                       }
                     }}
                   />
@@ -351,6 +428,8 @@ export function CheckoutPage() {
                     name="address"
                     type="text"
                     required
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
                     aria-required="true"
                     aria-invalid={errors.address ? "true" : "false"}
                     aria-describedby={errors.address ? "address-error" : "address-help"}
@@ -377,6 +456,13 @@ export function CheckoutPage() {
                       name="city"
                       type="text"
                       required
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (!/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ\s]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                          e.preventDefault();
+                        }
+                      }}
                       aria-required="true"
                       aria-invalid={errors.city ? "true" : "false"}
                       aria-describedby={errors.city ? "city-error" : "city-help"}
@@ -401,13 +487,15 @@ export function CheckoutPage() {
                       name="postal"
                       type="text"
                       required
+                      value={postal}
+                      onChange={(e) => setPostal(e.target.value)}
                       aria-required="true"
                       aria-invalid={errors.postal ? "true" : "false"}
                       aria-describedby={errors.postal ? "postal-error" : "postal-help"}
                       className="focus:ring-2 focus:ring-black"
-                      placeholder="28001"
+                      placeholder="280011"
                       inputMode="numeric"
-                      maxLength={5}
+                      maxLength={6}
                       onKeyDown={(e) => {
                         if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                           e.preventDefault();
@@ -421,7 +509,7 @@ export function CheckoutPage() {
                     )}
                     {!errors.postal && (
                       <p id="postal-help" className="text-xs text-gray-600 mt-1">
-                        5 dígitos (ej: 28001)
+                        6 dígitos (ej: 280011)
                       </p>
                     )}
                   </div>
