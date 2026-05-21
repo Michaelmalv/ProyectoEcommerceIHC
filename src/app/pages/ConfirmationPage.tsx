@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router";
 import { updateOrderStatus } from "../../utils/api";
-import { CheckCircle, Package, Truck, Home, Copy, Check } from "lucide-react";
+import { CheckCircle, Copy, Check } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
+import OrderStatus from "../components/OrderStatus";
 
 /**
  * ANÁLISIS HEURÍSTICO:
@@ -26,8 +27,8 @@ export function ConfirmationPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Simulación de cambio de estado
-    const THREE_MIN = 3 * 60 * 1000; // 3 minutos
+    // Simulación de cambio de estado cada 2 minutos
+    const TWO_MIN = 2 * 60 * 1000; // 2 minutos
 
     const timer1 = setTimeout(async () => {
       setTrackingStatus("confirmado");
@@ -36,7 +37,7 @@ export function ConfirmationPage() {
       } catch (e) {
         console.warn("No se pudo actualizar estado a 'confirmado' en servidor:", e);
       }
-    }, THREE_MIN);
+    }, TWO_MIN);
 
     const timer2 = setTimeout(async () => {
       setTrackingStatus("preparando");
@@ -45,7 +46,7 @@ export function ConfirmationPage() {
       } catch (e) {
         console.warn("No se pudo actualizar estado a 'preparando' en servidor:", e);
       }
-    }, THREE_MIN * 2);
+    }, TWO_MIN * 2);
 
     // Opcional: después de 3 pasos mover a 'enviado'
     const timer3 = setTimeout(async () => {
@@ -55,7 +56,7 @@ export function ConfirmationPage() {
       } catch (e) {
         console.warn("No se pudo actualizar estado a 'enviado' en servidor:", e);
       }
-    }, THREE_MIN * 3);
+    }, TWO_MIN * 3);
 
     return () => {
       clearTimeout(timer1);
@@ -199,99 +200,11 @@ export function ConfirmationPage() {
         </Card>
       </div>
 
-      {/* Tracking Simulation */}
       <Card className="p-6">
         <h2 className="font-display mb-6 flex items-center gap-2 text-2xl tracking-tight">
-          <Truck size={24} aria-hidden="true" />
           Seguimiento del pedido
         </h2>
-
-        <div className="space-y-4">
-          {/* Step 1 */}
-          <div className="flex items-start gap-4">
-            <div
-              className={`w-12 h-12 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                trackingStatus === "procesando" ||
-                trackingStatus === "confirmado" ||
-                trackingStatus === "preparando"
-                  ? "bg-green-600 border-green-600 text-white"
-                  : "border-gray-300"
-              }`}
-            >
-              <span className="text-xl">
-                {trackingStatus === "procesando" ? "⏳" : "✓"}
-              </span>
-            </div>
-            <div className="flex-1">
-              <p className="font-bold">Pedido recibido</p>
-              <p className="text-sm text-gray-600">Tu pedido ha sido registrado</p>
-              {trackingStatus === "procesando" && (
-                <p className={`text-sm font-bold ${status.color} mt-1`}>
-                  {status.icon} {status.text}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="flex items-start gap-4">
-            <div
-              className={`w-12 h-12 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                trackingStatus === "confirmado" || trackingStatus === "preparando"
-                  ? "bg-green-600 border-green-600 text-white"
-                  : "border-gray-300"
-              }`}
-            >
-              <Package size={24} />
-            </div>
-            <div className="flex-1">
-              <p className="font-bold">Pago confirmado</p>
-              <p className="text-sm text-gray-600">El pago ha sido procesado exitosamente</p>
-              {trackingStatus === "confirmado" && (
-                <p className={`text-sm font-bold ${status.color} mt-1`}>
-                  {status.icon} {status.text}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="flex items-start gap-4">
-            <div
-              className={`w-12 h-12 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                trackingStatus === "preparando"
-                  ? "bg-blue-600 border-blue-600 text-white"
-                  : "border-gray-300"
-              }`}
-            >
-              <Truck size={24} />
-            </div>
-            <div className="flex-1">
-              <p className="font-bold">Preparando envío</p>
-              <p className="text-sm text-gray-600">
-                Estamos preparando tu pedido para el envío
-              </p>
-              {trackingStatus === "preparando" && (
-                <p className={`text-sm font-bold ${status.color} mt-1`}>
-                  {status.icon} {status.text} (actualización en tiempo real)
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Step 4 */}
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0">
-              <Home size={24} className="text-gray-400" />
-            </div>
-            <div className="flex-1">
-              <p className="font-bold text-gray-400">En camino</p>
-              <p className="text-sm text-gray-600">
-                Recibirás un email cuando tu pedido sea enviado
-              </p>
-            </div>
-          </div>
-        </div>
+        <OrderStatus status={trackingStatus} layout="vertical" />
       </Card>
 
       {/* Actions */}

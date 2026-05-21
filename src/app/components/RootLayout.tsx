@@ -124,6 +124,12 @@ function RootLayoutContent() {
                 Catálogo
               </Link>
               <Link
+                to="/seguimiento"
+                className={`rounded-full px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-black ${isActive("/seguimiento") ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent/60"}`}
+              >
+                Seguimiento
+              </Link>
+              <Link
                 to="/ayuda"
                 className={`flex items-center gap-2 rounded-full px-4 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-black ${isActive("/ayuda") ? "bg-primary text-primary-foreground shadow-sm" : "hover:bg-accent/60"}`}
                 aria-label="Ayuda y preguntas frecuentes"
@@ -242,6 +248,12 @@ function RootLayoutContent() {
                   className="rounded-xl px-3 py-3 hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-black"
                 >
                   Catálogo
+                </Link>
+                <Link
+                  to="/seguimiento"
+                  className="rounded-xl px-3 py-3 hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  Seguimiento
                 </Link>
                 <Link
                   to="/ayuda"

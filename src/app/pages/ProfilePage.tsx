@@ -197,10 +197,10 @@ export function ProfilePage() {
             <h2 className="text-xl font-bold mb-4">Configuración</h2>
             <div className="space-y-4">
               <Button asChild variant="outline" className="w-full border-2 justify-start text-left break-words whitespace-normal h-auto py-3">
-                <a href="/perfil/cambiar-contrasena" className="block">Cambiar contraseña</a>
+                <Link to="/perfil/cambiar-contrasena" className="block">Cambiar contraseña</Link>
               </Button>
               <Button asChild variant="outline" className="w-full border-2 justify-start text-left break-words whitespace-normal h-auto py-3">
-                <a href="/perfil/privacidad" className="block">Configuración de privacidad</a>
+                <Link to="/perfil/privacidad" className="block">Configuración de privacidad</Link>
               </Button>
             </div>
           </Card>

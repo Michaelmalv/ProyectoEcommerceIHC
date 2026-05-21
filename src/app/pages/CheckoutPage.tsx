@@ -61,7 +61,7 @@ import {
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { getCartTotal, clearCart, cartItems } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [processing, setProcessing] = useState(false);
   const [expiryDate, setExpiryDate] = useState("");
@@ -74,53 +74,80 @@ export function CheckoutPage() {
   const [city, setCity] = useState("");
   const [postal, setPostal] = useState("");
 
-  // Cargar datos del usuario autenticado para autocompletar o desde localStorage
+  const checkoutStorageKey = "checkout-form";
+
+  // Cargar datos solo para usuarios autenticados
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     const loadData = async () => {
-      // Primero intentar cargar desde localStorage (datos persistentes)
-      const savedCheckout = localStorage.getItem('checkout-form');
+      if (!user?.id) {
+        localStorage.removeItem(checkoutStorageKey);
+        setEmail("");
+        setName("");
+        setPhone("");
+        setAddress("");
+        setCity("");
+        setPostal("");
+        setCardNumber("");
+        setExpiryDate("");
+        setCvv("");
+        return;
+      }
+
+      // Intentar cargar un borrador solo si pertenece al usuario autenticado
+      const savedCheckout = localStorage.getItem(checkoutStorageKey);
       if (savedCheckout) {
         try {
           const data = JSON.parse(savedCheckout);
-          setEmail(data.email || "");
-          setName(data.name || "");
-          setPhone(data.phone || "");
-          setAddress(data.address || "");
-          setCity(data.city || "");
-          setPostal(data.postal || "");
-          setCardNumber(data.cardNumber || "");
-          setExpiryDate(data.expiryDate || "");
-          setCvv(data.cvv || "");
-          return; // Ya cargó desde localStorage, no cargar desde API
+          if (data.userId === user.id) {
+            setEmail(data.email || "");
+            setName(data.name || "");
+            setPhone(data.phone || "");
+            setAddress(data.address || "");
+            setCity(data.city || "");
+            setPostal(data.postal || "");
+            setCardNumber(data.cardNumber || "");
+            setExpiryDate(data.expiryDate || "");
+            setCvv(data.cvv || "");
+            return;
+          }
         } catch (err) {
           console.error('Error parsing localStorage checkout data:', err);
         }
       }
       
-      // Si no hay datos en localStorage, cargar del perfil del usuario
-      if (user?.id) {
-        try {
-          const profile = await getUserProfile(user.id);
-          if (profile) {
-            setEmail(user.email || "");
-            setName(profile.name || "");
-            setPhone(profile.phone || "");
-            setAddress(profile.address || "");
-            setCity(profile.city || "");
-            setPostal(profile.postal || "");
-          }
-        } catch (err) {
-          // Usuario logueado pero sin perfil lleno, usar lo que tenemos
+      // Si no hay borrador válido, cargar del perfil del usuario autenticado
+      try {
+        const profile = await getUserProfile(user.id);
+        if (profile) {
           setEmail(user.email || "");
+          setName(profile.name || "");
+          setPhone(profile.phone || "");
+          setAddress(profile.address || "");
+          setCity(profile.city || "");
+          setPostal(profile.postal || "");
         }
+      } catch (err) {
+        // Usuario logueado pero sin perfil lleno, usar lo que tenemos
+        setEmail(user.email || "");
       }
     };
-    loadData();
-  }, [user]);
 
-  // Guardar datos en localStorage cuando cambien
+    loadData();
+  }, [user, authLoading]);
+
+  // Guardar datos solo si el usuario está autenticado
   useEffect(() => {
+    if (!user?.id) {
+      localStorage.removeItem(checkoutStorageKey);
+      return;
+    }
+
     const checkoutData = {
+      userId: user.id,
       email,
       name,
       phone,
@@ -131,12 +158,12 @@ export function CheckoutPage() {
       expiryDate,
       cvv
     };
-    localStorage.setItem('checkout-form', JSON.stringify(checkoutData));
-  }, [email, name, phone, address, city, postal, cardNumber, expiryDate, cvv]);
+    localStorage.setItem(checkoutStorageKey, JSON.stringify(checkoutData));
+  }, [user, email, name, phone, address, city, postal, cardNumber, expiryDate, cvv]);
 
   // Limpiar localStorage después de procesar un pedido exitosamente
   const clearCheckoutForm = () => {
-    localStorage.removeItem('checkout-form');
+    localStorage.removeItem(checkoutStorageKey);
   };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {

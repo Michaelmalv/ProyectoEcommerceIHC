@@ -4,7 +4,7 @@ import { Card } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Package, CheckCircle, Truck, Clock } from "lucide-react";
-import { getOrderById } from "../../utils/api";
+import { getOrderById, updateOrderStatus } from "../../utils/api";
 import { useLocation } from "react-router";
 import { useRef } from "react";
 import {
@@ -15,6 +15,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "../components/ui/breadcrumb";
+import OrderStatus from "../components/OrderStatus";
 
 export function TrackOrderPage() {
   const [orderId, setOrderId] = useState("");
@@ -23,6 +24,41 @@ export function TrackOrderPage() {
   const [error, setError] = useState("");
   const location = useLocation();
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const statusSteps = [
+    { key: "procesando", label: "Procesando" },
+    { key: "confirmado", label: "Confirmado" },
+    { key: "preparando", label: "Preparando" },
+    { key: "enviado", label: "Enviado" },
+    { key: "entregado", label: "Entregado" },
+  ];
+
+  const normalizeStatus = (status: string) => String(status || "").trim().toLowerCase();
+
+  const getStepIndex = (status: string) => {
+    const normalized = normalizeStatus(status);
+    return statusSteps.findIndex((step) => step.key === normalized);
+  };
+
+  const getNextStatus = (currentStatus: string) => {
+    const currentIndex = getStepIndex(currentStatus);
+    if (currentIndex === -1 || currentIndex >= statusSteps.length - 1) {
+      return null;
+    }
+    return statusSteps[currentIndex + 1].key;
+  };
+
+  const getMostAdvancedStatus = (currentStatus: string, incomingStatus: string) => {
+    const currentIndex = getStepIndex(currentStatus);
+    const incomingIndex = getStepIndex(incomingStatus);
+
+    if (incomingIndex >= currentIndex) {
+      return normalizeStatus(incomingStatus);
+    }
+
+    return normalizeStatus(currentStatus);
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +100,13 @@ export function TrackOrderPage() {
   const pollOrderStatus = async (id: string) => {
     try {
       const orderData = await getOrderById(id.trim());
-      setOrder(orderData); // Actualiza silenciosamente
+      setOrder((prev: any) => {
+        if (!prev) return orderData;
+        return {
+          ...orderData,
+          status: getMostAdvancedStatus(prev.status, orderData.status),
+        };
+      });
     } catch (err) {
       // silenciar errores de polling
     }
@@ -79,13 +121,13 @@ export function TrackOrderPage() {
   }, [location]);
 
   useEffect(() => {
-    const THREE_MIN = 3 * 60 * 1000; // 3 minutos
+    const TWO_MIN = 2 * 60 * 1000; // 2 minutos
     
     if (orderId && !pollIntervalRef.current) {
-      // Poll cada 3 minutos para actualizar estado desde servidor
+      // Poll cada 2 minutos para actualizar estado desde servidor
       pollIntervalRef.current = setInterval(async () => {
         await pollOrderStatus(orderId);
-      }, THREE_MIN);
+      }, TWO_MIN);
     }
 
     return () => {
@@ -112,17 +154,37 @@ export function TrackOrderPage() {
     }
   };
 
-  const statusSteps = [
-    { key: "procesando", label: "Procesando" },
-    { key: "confirmado", label: "Confirmado" },
-    { key: "preparando", label: "Preparando" },
-    { key: "enviado", label: "Enviado" },
-    { key: "entregado", label: "Entregado" },
-  ];
+  useEffect(() => {
+    if (!order?.id || !order?.status) {
+      return;
+    }
 
-  const getCurrentStepIndex = (status: string) => {
-    return statusSteps.findIndex((step) => step.key === status);
-  };
+    const nextStatus = getNextStatus(order.status);
+    if (!nextStatus) {
+      return;
+    }
+
+    const TWO_MIN = 2 * 60 * 1000;
+    progressTimeoutRef.current = setTimeout(async () => {
+      // Avance local inmediato para que la UI no dependa del éxito de red.
+      setOrder((prev: any) => (prev ? { ...prev, status: nextStatus } : prev));
+
+      try {
+        await updateOrderStatus(order.id, nextStatus);
+      } catch (err) {
+        // silencioso: el polling periódico seguirá intentando refrescar estado
+      }
+
+      await pollOrderStatus(order.id);
+    }, TWO_MIN);
+
+    return () => {
+      if (progressTimeoutRef.current) {
+        clearTimeout(progressTimeoutRef.current);
+        progressTimeoutRef.current = null;
+      }
+    };
+  }, [order?.id, order?.status]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -187,38 +249,7 @@ export function TrackOrderPage() {
               </div>
             </div>
 
-            {/* Barra de progreso */}
-            <div className="relative">
-              <div className="flex justify-between mb-2">
-                {statusSteps.map((step, index) => {
-                  const currentIndex = getCurrentStepIndex(order.status);
-                  const isCompleted = index <= currentIndex;
-                  const isCurrent = index === currentIndex;
-
-                  return (
-                    <div key={step.key} className="flex flex-col items-center flex-1">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center border-2 ${
-                          isCompleted
-                            ? "bg-black border-black text-white"
-                            : "bg-white border-gray-300 text-gray-400"
-                        }`}
-                      >
-                        {isCompleted ? "✓" : index + 1}
-                      </div>
-                      <p
-                        className={`text-xs mt-2 text-center ${
-                          isCurrent ? "font-bold" : "text-gray-600"
-                        }`}
-                      >
-                        {step.label}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-300 -z-10" />
-            </div>
+            <OrderStatus status={order.status} layout="horizontal" />
           </Card>
 
           {/* Información del pedido */}

@@ -264,11 +264,29 @@ export async function updateUserProfile(userId: string, data: {
 
 // Cambiar contraseña del usuario autenticado
 export async function changePassword(newPassword: string) {
+  // updateUser requiere sesión activa; intentamos recuperarla antes de llamar.
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError) {
+    throw new Error('No se pudo validar tu sesión. Intenta iniciar sesión nuevamente.');
+  }
+
+  if (!session) {
+    throw new Error('Tu sesión expiró. Inicia sesión nuevamente para cambiar la contraseña.');
+  }
+
   const { data, error } = await supabase.auth.updateUser({
     password: newPassword,
   });
 
   if (error) {
+    const rawMessage = String(error.message || '').toLowerCase();
+    if (rawMessage.includes('auth session missing') || rawMessage.includes('jwt')) {
+      throw new Error('Tu sesión expiró. Inicia sesión nuevamente para cambiar la contraseña.');
+    }
     throw new Error(error.message || 'Error al cambiar contraseña');
   }
 
