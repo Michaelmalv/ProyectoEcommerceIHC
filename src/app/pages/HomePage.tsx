@@ -160,6 +160,9 @@ export function HomePage() {
                         src={slide.src}
                         alt={slide.alt}
                         className="h-[28rem] w-full object-cover"
+                        loading={slide.alt === heroSlides[0].alt ? "eager" : "lazy"}
+                        decoding="async"
+                        fetchPriority={slide.alt === heroSlides[0].alt ? "high" : "auto"}
                       />
                     </CarouselItem>
                   ))}
@@ -194,6 +197,9 @@ export function HomePage() {
                   src={brandLogoUrl}
                   alt="Logo de CrowStore"
                   className="h-14 w-14 rounded-full border border-[color:var(--border)] object-cover"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                 />
               </div>
             </div>
@@ -226,6 +232,8 @@ export function HomePage() {
                     src={categoryImageUrls[category.slug as keyof typeof categoryImageUrls]}
                     alt={`Categoría de ${category.name}`}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <div className="flex items-center justify-between gap-3">

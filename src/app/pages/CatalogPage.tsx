@@ -311,6 +311,8 @@ export function CatalogPage() {
                             src={getPublicUrlFromPath(product.image)}
                             alt={`${product.name} - ${product.color} - ${product.gender}`}
                             className="max-h-full max-w-full object-contain transition-transform duration-500 hover:scale-105"
+                            loading="lazy"
+                            decoding="async"
                           />
                         </div>
                       ) : (
@@ -319,6 +321,8 @@ export function CatalogPage() {
                             src={getPublicUrlFromPath(product.image)}
                             alt={`${product.name} - ${product.color} - ${product.gender}`}
                             className="max-h-full max-w-full object-contain transition-transform duration-500 hover:scale-105"
+                            loading="lazy"
+                            decoding="async"
                           />
                         </div>
                       )}

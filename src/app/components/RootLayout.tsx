@@ -101,6 +101,9 @@ function RootLayoutContent() {
                 src={brandLogoUrl}
                 alt="Logo de CrowStore"
                 className="h-11 w-11 rounded-full object-cover border border-[color:var(--border)] bg-white shadow-sm"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
               />
               <div className="hidden sm:block">
                 <span className="block font-display text-2xl leading-none">CrowStore</span>
@@ -316,6 +319,8 @@ function RootLayoutContent() {
                                 src={product.image}
                                 alt={`${product.name} - ${product.color}`}
                                 className="max-h-full max-w-full object-contain"
+                                loading="lazy"
+                                decoding="async"
                               />
                             </div>
                           ) : (
@@ -324,6 +329,8 @@ function RootLayoutContent() {
                                 src={product.image}
                                 alt={`${product.name} - ${product.color}`}
                                 className="max-h-full max-w-full object-contain"
+                                loading="lazy"
+                                decoding="async"
                               />
                             </div>
                           )}

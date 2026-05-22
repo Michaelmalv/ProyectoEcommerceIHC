@@ -213,6 +213,9 @@ export function ProductPage() {
                 src={resolvedMainImage}
                 alt={`${product.name} - ${product.color} para ${product.gender} - Vista principal`}
                 className="max-h-[40vh] md:max-h-[64vh] max-w-full w-auto object-contain"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
               />
             </div>
             <div className="absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground shadow-sm backdrop-blur-sm">
@@ -238,6 +241,8 @@ export function ProductPage() {
                       src={image}
                       alt={`${product.name} - Vista ${index + 1}`}
                       className={`max-h-full w-auto object-contain transition-opacity ${selectedImage === image ? "opacity-100" : "opacity-80"}`}
+                      loading="lazy"
+                      decoding="async"
                     />
                   </button>
                 ))}

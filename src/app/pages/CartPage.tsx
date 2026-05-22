@@ -80,6 +80,8 @@ export function CartPage() {
                         src={item.image}
                         alt={`${item.name} - ${item.color} - Talla ${item.selectedSize}`}
                         className="w-full h-full object-contain"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
 
