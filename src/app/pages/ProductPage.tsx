@@ -279,7 +279,7 @@ export function ProductPage() {
           </p>
 
           {/* Size Selection */}
-          <div className="mb-6">
+          <div className="mb-6" translate="no">
             <Label className="mb-3 block text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Selecciona tu talla
               {!selectedSize && (

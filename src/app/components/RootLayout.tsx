@@ -72,7 +72,7 @@ function RootLayoutContent() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden text-foreground">
+    <div className="relative min-h-screen overflow-x-hidden text-foreground" translate="no">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-24 left-[-8rem] h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(168,111,67,0.22),transparent_70%)] blur-3xl" />
         <div className="absolute right-[-6rem] top-32 h-96 w-96 rounded-full bg-[radial-gradient(circle,rgba(214,186,149,0.26),transparent_72%)] blur-3xl" />

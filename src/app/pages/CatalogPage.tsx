@@ -180,6 +180,7 @@ export function CatalogPage() {
           <aside
             className="w-full flex-shrink-0 lg:w-80"
             aria-label="Filtros de productos"
+            translate="no"
           >
             <Card className="sticky top-28 p-5">
               <div className="mb-4 flex items-center justify-between gap-3">
@@ -211,6 +212,7 @@ export function CatalogPage() {
                       <Label
                         htmlFor={`gender-${gender}`}
                         className="ml-2 cursor-pointer capitalize"
+                        translate="no"
                       >
                         {gender}
                       </Label>
@@ -234,6 +236,7 @@ export function CatalogPage() {
                       <Label
                         htmlFor={`size-${size}`}
                         className="ml-2 cursor-pointer"
+                        translate="no"
                       >
                         {size}
                       </Label>
@@ -257,6 +260,7 @@ export function CatalogPage() {
                       <Label
                         htmlFor={`color-${color}`}
                         className="ml-2 cursor-pointer"
+                        translate="no"
                       >
                         {color}
                       </Label>
