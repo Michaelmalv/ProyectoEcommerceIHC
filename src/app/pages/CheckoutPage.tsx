@@ -234,7 +234,7 @@ export function CheckoutPage() {
 
     // Fecha de expiración
     if (!expiryDate || !validateExpiryDate(expiryDate)) {
-      newErrors.expiry = "Fecha de expiración debe ser válida y futura (MM/AA)";
+      newErrors.expiry = "Fecha de expiración debe ser válida y no superar 5 años (MM/AA)";
     }
 
     // CVV
@@ -626,7 +626,7 @@ export function CheckoutPage() {
                       )}
                       {!errors.expiry && (
                         <p id="expiry-help" className="text-xs text-gray-600 mt-1">
-                          MM/AA
+                          MM/AA, hasta 5 años desde hoy
                         </p>
                       )}
                     </div>

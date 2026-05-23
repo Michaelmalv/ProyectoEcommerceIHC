@@ -126,7 +126,7 @@ export function formatCVV(value: string): string {
 // ============= FECHA EXPIRACIÓN =============
 /**
  * Valida fecha de expiración (MM/AA)
- * Debe ser válida y no estar vencida
+ * Debe ser válida, no estar vencida y no superar 5 años desde hoy
  */
 export function validateExpiryDate(expiry: string): boolean {
   if (!expiry || expiry.length !== 5) return false;
@@ -138,12 +138,18 @@ export function validateExpiryDate(expiry: string): boolean {
   // Validar mes 1-12
   if (monthNum < 1 || monthNum > 12) return false;
   
-  // Validar año no está vencido
-  const currentYear = new Date().getFullYear() % 100;
-  const currentMonth = new Date().getMonth() + 1;
-  
-  if (yearNum < currentYear) return false;
-  if (yearNum === currentYear && monthNum < currentMonth) return false;
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+  const maxYear = currentYear + 5;
+  const expiryYear = 2000 + yearNum;
+
+  // Validar año no está vencido ni excede 5 años hacia adelante
+  if (expiryYear < currentYear) return false;
+  if (expiryYear > maxYear) return false;
+
+  if (expiryYear === currentYear && monthNum < currentMonth) return false;
+  if (expiryYear === maxYear && monthNum > currentMonth) return false;
   
   return true;
 }
