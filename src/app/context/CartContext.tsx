@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 export interface Product {
   id: number;
@@ -30,8 +30,49 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const CART_STORAGE_KEY = "crowstore-cart";
+
+function loadCartItemsFromStorage(): CartItem[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  const savedCart = window.localStorage.getItem(CART_STORAGE_KEY);
+  if (!savedCart) {
+    return [];
+  }
+
+  try {
+    const parsedCart = JSON.parse(savedCart);
+    if (!Array.isArray(parsedCart)) {
+      return [];
+    }
+
+    return parsedCart.filter((item) => {
+      return (
+        item &&
+        typeof item.id === "number" &&
+        typeof item.name === "string" &&
+        typeof item.price === "number" &&
+        typeof item.quantity === "number" &&
+        typeof item.selectedSize === "string"
+      );
+    });
+  } catch {
+    return [];
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>(loadCartItemsFromStorage);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+  }, [cartItems]);
 
   const addToCart = (product: Product, size: string, quantity: number) => {
     setCartItems((prev) => {
