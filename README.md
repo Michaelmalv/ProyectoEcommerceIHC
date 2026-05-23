@@ -237,6 +237,12 @@ Documentación:
 
 ---
 
+## 📄 Entrega Académica
+
+Si necesitas revisar rápidamente lo pedido en la evaluación, consulta [ENTREGABLES_Y_EVALUACION.md](ENTREGABLES_Y_EVALUACION.md).
+
+---
+
 ## 🎨 Filosofía de Diseño: Wireframe Funcional
 
 ### ¿Por qué baja fidelidad?
